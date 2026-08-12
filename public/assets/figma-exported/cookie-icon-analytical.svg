@@ -1,0 +1,24 @@
+<svg width="61" height="61" viewBox="0 0 61 61" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Container">
+<g clip-path="url(#clip0_8320_1196)">
+<rect width="61" height="61" rx="8" fill="url(#paint0_linear_8320_1196)"/>
+<g id="Icon">
+<path id="Vector" d="M33.9997 17.667H21.9997C21.2924 17.667 20.6142 17.9479 20.1141 18.448C19.614 18.9481 19.333 19.6264 19.333 20.3337V41.667C19.333 42.3742 19.614 43.0525 20.1141 43.5526C20.6142 44.0527 21.2924 44.3337 21.9997 44.3337H37.9997C38.7069 44.3337 39.3852 44.0527 39.8853 43.5526C40.3854 43.0525 40.6663 42.3742 40.6663 41.667V24.3337L33.9997 17.667Z" stroke="white" stroke-width="2.66667" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M32.667 17.667V23.0003C32.667 23.7076 32.9479 24.3858 33.448 24.8859C33.9481 25.386 34.6264 25.667 35.3337 25.667H40.667" stroke="white" stroke-width="2.66667" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M27.3337 27H24.667" stroke="white" stroke-width="2.66667" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_4" d="M35.3337 32.333H24.667" stroke="white" stroke-width="2.66667" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_5" d="M35.3337 37.667H24.667" stroke="white" stroke-width="2.66667" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_8320_1196" x1="0" y1="0" x2="61" y2="61" gradientUnits="userSpaceOnUse">
+<stop stop-color="#00C950"/>
+<stop offset="0.5" stop-color="#009966"/>
+<stop offset="1" stop-color="#009689"/>
+</linearGradient>
+<clipPath id="clip0_8320_1196">
+<rect width="61" height="61" rx="8" fill="white"/>
+</clipPath>
+</defs>
+</svg>

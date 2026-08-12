@@ -1,0 +1,21 @@
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Container">
+<g clip-path="url(#clip0_8271_180)">
+<rect width="60" height="60" rx="8" fill="url(#paint0_linear_8271_180)"/>
+<g id="Icon">
+<path id="Vector" d="M33.375 40.125V31.125C33.375 30.8266 33.2565 30.5405 33.0455 30.3295C32.8345 30.1185 32.5484 30 32.25 30H27.75C27.4516 30 27.1655 30.1185 26.9545 30.3295C26.7435 30.5405 26.625 30.8266 26.625 31.125V40.125" stroke="white" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M19.875 27.7499C19.8749 27.4226 19.9463 27.0992 20.084 26.8023C20.2218 26.5054 20.4226 26.2422 20.6726 26.0309L28.5476 19.282C28.9537 18.9388 29.4683 18.7505 30 18.7505C30.5317 18.7505 31.0463 18.9388 31.4524 19.282L39.3274 26.0309C39.5774 26.2422 39.7782 26.5054 39.916 26.8023C40.0538 27.0992 40.1251 27.4226 40.125 27.7499V37.8749C40.125 38.4716 39.8879 39.0439 39.466 39.4659C39.044 39.8878 38.4717 40.1249 37.875 40.1249H22.125C21.5283 40.1249 20.956 39.8878 20.534 39.4659C20.1121 39.0439 19.875 38.4716 19.875 37.8749V27.7499Z" stroke="white" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_8271_180" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+<stop stop-color="#2B7FFF"/>
+<stop offset="0.5" stop-color="#155DFC"/>
+<stop offset="1" stop-color="#4F39F6"/>
+</linearGradient>
+<clipPath id="clip0_8271_180">
+<rect width="60" height="60" rx="8" fill="white"/>
+</clipPath>
+</defs>
+</svg>

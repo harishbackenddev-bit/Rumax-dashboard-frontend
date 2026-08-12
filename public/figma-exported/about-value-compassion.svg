@@ -1,0 +1,20 @@
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Container">
+<g clip-path="url(#clip0_8313_1257)">
+<rect width="60" height="60" rx="8" fill="url(#paint0_linear_8313_1257)"/>
+<g id="Icon">
+<path id="Vector" d="M38.75 32.5C40.6125 30.675 42.5 28.4875 42.5 25.625C42.5 23.8016 41.7757 22.053 40.4864 20.7636C39.197 19.4743 37.4484 18.75 35.625 18.75C33.425 18.75 31.875 19.375 30 21.25C28.125 19.375 26.575 18.75 24.375 18.75C22.5516 18.75 20.803 19.4743 19.5136 20.7636C18.2243 22.053 17.5 23.8016 17.5 25.625C17.5 28.5 19.375 30.6875 21.25 32.5L30 41.25L38.75 32.5Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_8313_1257" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+<stop stop-color="#2B7FFF"/>
+<stop offset="0.5" stop-color="#155DFC"/>
+<stop offset="1" stop-color="#4F39F6"/>
+</linearGradient>
+<clipPath id="clip0_8313_1257">
+<rect width="60" height="60" rx="8" fill="white"/>
+</clipPath>
+</defs>
+</svg>

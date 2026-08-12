@@ -1,0 +1,128 @@
+.ssm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  z-index: 9999;
+}
+
+.ssm-modal {
+  position: relative;
+  width: min(1100px, 100%);
+  margin-top: 50px;
+  background: #fff;
+  border: 6px solid #d8e7ff;
+  border-radius: 36px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  padding: 42px 40px 30px;
+}
+
+.ssm-close-button {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: #d9d8ef;
+  color: #27224b;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.2s;
+}
+
+.ssm-close-button:hover {
+  background: #cfcde8;
+}
+
+.ssm-text {
+  margin: 0;
+  max-width: 900px;
+  font-size: 20px;
+  line-height: 1.7;
+  color: #222;
+  font-weight: 400;
+  text-align: left;
+}
+
+.ssm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.ssm-switch-button,
+.ssm-stay-button {
+  min-width: 160px;
+  height: 45px;
+  padding: 0 30px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.ssm-switch-button {
+  background: #12086f;
+  color: #fff;
+  border: none;
+}
+
+.ssm-switch-button:hover {
+  background: #57166d;
+}
+
+.ssm-stay-button {
+  background: #fff;
+  color: #777;
+  border: 1px solid #cfcfcf;
+}
+
+.ssm-stay-button:hover {
+  background: #f5f5f5;
+}
+
+@media (max-width: 992px) {
+  .ssm-modal {
+    padding: 70px 24px 24px;
+    border-radius: 24px;
+    border-width: 4px;
+  }
+
+  .ssm-text {
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  .ssm-actions {
+    margin-top: 40px;
+    flex-direction: column;
+  }
+
+  .ssm-switch-button,
+  .ssm-stay-button {
+    width: 100%;
+  }
+
+  .ssm-close-button {
+    width: 46px;
+    height: 46px;
+    top: 14px;
+    right: 14px;
+    font-size: 26px;
+  }
+}

@@ -1,0 +1,562 @@
+/* components/website/services/clinical/TrialSupportForm.css */
+
+/* Main Container */
+.trial-form-container {
+  max-width: 848px;
+  width: 100%;
+  margin: 0 auto;
+  background: #FFFFFF;
+  box-shadow: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-radius: 24px;
+  padding: 48px;
+  position: relative;
+}
+
+/* Step Indicator */
+.step-indicator {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.step-text {
+  font-family: 'Manrope', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #4A5565;
+}
+
+.step-text.active {
+  color: #12086F;
+}
+
+/* Progress Bar */
+.progress-container {
+  width: 100%;
+  height: 8px;
+  background: #E5E7EB;
+  border-radius: 2.68435e+07px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #12086F;
+  border-radius: 2.68435e+07px;
+  transition: width 0.4s ease;
+}
+
+/* Form Content */
+.form-content {
+  min-height: 400px;
+}
+
+.step-content {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.step-heading {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 36px;
+  text-align: center;
+  color: #101828;
+  margin-bottom: 32px;
+}
+
+/* Form Fields */
+.form-row {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.form-label {
+  font-family: 'Manrope', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #364153;
+}
+
+.form-label .required {
+  color: #EF4444;
+}
+
+.field-hint {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  color: #6A7282;
+  margin-top: -4px;
+}
+
+/* Checkbox Group */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: #364153;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #12086F;
+  cursor: pointer;
+}
+
+/* Inputs */
+.form-input {
+  width: 100%;
+  height: 50.4px;
+  background: rgba(255, 255, 255, 1e-05);
+  border: 1.6px solid rgba(27, 34, 128, 0.33);
+  box-shadow: 0px 0px 0px 0.110843px rgba(27, 34, 128, 0.0110843);
+  border-radius: 14px;
+  padding: 0 16px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: #364153;
+  transition: border-color 0.3s ease;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #12086F;
+  box-shadow: 0 0 0 3px rgba(18, 8, 111, 0.1);
+}
+
+.form-input.error {
+  border-color: #EF4444;
+}
+
+.form-input::placeholder {
+  color: #9CA3AF;
+}
+
+/* Textarea */
+.form-textarea {
+  width: 100%;
+  min-height: 150px;
+  background: rgba(255, 255, 255, 1e-05);
+  border: 1.6px solid rgba(27, 34, 128, 0.33);
+  border-radius: 14px;
+  padding: 16px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: #364153;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+  outline: none;
+}
+
+.form-textarea:focus {
+  border-color: #12086F;
+  box-shadow: 0 0 0 3px rgba(18, 8, 111, 0.1);
+}
+
+.form-textarea.error {
+  border-color: #EF4444;
+}
+
+.form-textarea::placeholder {
+  color: #9CA3AF;
+}
+
+/* Word Counter */
+.word-counter {
+  text-align: right;
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  color: #6A7282;
+  margin-top: 4px;
+}
+
+.word-counter .error {
+  color: #EF4444;
+}
+
+/* Phone Input */
+.phone-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.phone-input-wrapper .country-code {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Manrope', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #364153;
+}
+
+.phone-input-wrapper .form-input {
+  padding-left: 40px;
+}
+
+/* Select Dropdown */
+.form-select {
+  width: 100%;
+  height: 50.4px;
+  background: rgba(255, 255, 255, 1e-05);
+  border: 1.6px solid rgba(27, 34, 128, 0.33);
+  box-shadow: 0px 0px 0px 0.110843px rgba(27, 34, 128, 0.0110843);
+  border-radius: 14px;
+  padding: 0 16px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: #364153;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23364153' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  outline: none;
+  transition: border-color 0.3s ease;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  border-color: #12086F;
+  box-shadow: 0 0 0 3px rgba(18, 8, 111, 0.1);
+}
+
+/* Error Message */
+.error-message {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  color: #EF4444;
+  margin-top: 4px;
+}
+
+/* Buttons */
+.form-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 0.8px solid #E5E7EB;
+}
+
+.btn-previous {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 17px 33px;
+  gap: 10px;
+  min-width: 182px;
+  height: 60px;
+  border: 1px solid #12086F;
+  border-radius: 8px;
+  background: transparent;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 25px;
+  color: #12086F;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-previous:hover:not(:disabled) {
+  background: #F5F3FF;
+}
+
+.btn-previous:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-next {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 17px 33px;
+  gap: 10px;
+  min-width: 182px;
+  height: 60px;
+  background: #12086F;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 25px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-next:hover {
+  background: #1A0F8A;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(18, 8, 111, 0.2);
+}
+
+.btn-submit {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 17px 33px;
+  gap: 10px;
+  min-width: 182px;
+  height: 60px;
+  background: #10B981;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 25px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-submit:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+/* Footer */
+.form-footer {
+  border-top: 0.8px solid #E5E7EB;
+  padding-top: 24px;
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.security-notice {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.security-icon {
+  width: 16px;
+  height: 16px;
+  border: 1.33333px solid #12086F;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #12086F;
+  font-weight: bold;
+}
+
+.security-text {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  color: #4A5565;
+}
+
+.trust-badge {
+  background: linear-gradient(90deg, #EFF6FF 0%, #FAF5FF 100%);
+  border-radius: 2.68435e+07px;
+  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-icon {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.16667px solid #12086F;
+  border-radius: 50%;
+  font-size: 8px;
+  color: #12086F;
+  font-weight: bold;
+}
+
+.badge-text {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #6A7282;
+}
+
+/* Confirmation Screen */
+.confirmation-screen {
+  text-align: center;
+  padding: 40px 20px;
+  animation: fadeIn 0.5s ease;
+}
+
+.confirmation-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.confirmation-title {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 36px;
+  color: #101828;
+  margin-bottom: 16px;
+}
+
+.confirmation-message {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #6A7282;
+  max-width: 500px;
+  margin: 0 auto 32px;
+}
+
+.btn-homepage {
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 17px 33px;
+  gap: 10px;
+  background: #12086F;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 25px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-homepage:hover {
+  background: #1A0F8A;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(18, 8, 111, 0.2);
+}
+
+/* Review Section */
+.review-section {
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.review-item {
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: #364153;
+  padding: 8px 0;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.review-item strong {
+  display: inline-block;
+  min-width: 120px;
+  color: #12086F;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .trial-form-container {
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .step-heading {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .btn-previous,
+  .btn-next,
+  .btn-submit {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .checkbox-group {
+    flex-direction: column;
+  }
+
+  .review-section {
+    grid-template-columns: 1fr;
+  }
+
+  .step-indicator {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+}
