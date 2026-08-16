@@ -100,8 +100,13 @@
     --navy: #12086F;
     --purple: #601b80;
     --white: #fff;
-    --container: 1544px;
-    --gutter: clamp(24px, 2.6vw, 50px);
+      --container: 1536px;
+  --gutter: clamp(24px, 2.6vw, 50px);
+  --section-y: clamp(72px, 5vw, 96px);
+  --radius: 14px;
+  --shadow: 0 18px 44px rgba(34, 26, 54, 0.12);
+  --dom-care-form-width: clamp(780px, 66.46vw, 1276px);
+  
     --ui-copy-text: clamp(12px, 1.04vw, 20px);
     --ui-title-text: clamp(27px, 2.29vw, 44px);
     --ui-wide-gutter: clamp(24px, 4vw, 76px);
@@ -131,12 +136,7 @@
     --purple-icon: #6a5cf0;
     --green-tint: #dcf3e6;
     --green-icon: #1fae63;
-      --container: 1536px;
-  --gutter: clamp(24px, 2.6vw, 50px);
-  --section-y: clamp(72px, 5vw, 96px);
-  --radius: 14px;
-  --shadow: 0 18px 44px rgba(34, 26, 54, 0.12);
-  --dom-care-form-width: clamp(780px, 66.46vw, 1276px);
+    
   }
 
   .dark {
