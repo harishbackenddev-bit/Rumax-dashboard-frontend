@@ -269,7 +269,10 @@
     line-height: normal;
   }
 }
-
+.container {
+  width: min(var(--container), calc(100% - (var(--gutter) * 2)));
+  margin: 0 auto;
+}
 /* ============================================
    UTILITY CLASSES
    ============================================ */
