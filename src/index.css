@@ -2959,7 +2959,14 @@ section.page-main-custom.page-section.grid-service.image_setting .h3-bottom p {
   .footer-certificates img {
     max-height: 50px;
   }
-
+.footer ul li {
+    margin-bottom: 18px;
+}
+  .footer-col h4 {
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 600;
+}
   .left-logo-0 h3 {
     line-height: 42px;
   }
@@ -3035,7 +3042,7 @@ section.page-main-custom.page-section.grid-service.image_setting .h3-bottom p {
   }
 
   .footer-social p {
-    font-size: 18px;
+    font-size: 16px;
   }
 
    .btn {
