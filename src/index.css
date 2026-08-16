@@ -5566,7 +5566,7 @@ section.Onboarding_main_Process {
 }
 
 .container {
-  width: min(var(--container), calc(100% - (var(--ui-wide-gutter) * 2)));
+  width: min(var(--container), calc(100% - (var(--ui-wide-gutter) * 2))) !important;
 }
 
 @media (width>=981px) and (width<=1180px) {
