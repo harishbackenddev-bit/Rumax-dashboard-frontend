@@ -3177,6 +3177,12 @@ body .InfoGrid-cardDescription {
     max-width: 50px;
     height: auto;
 }
+  .page-main-custom .page-section__heading p {
+    color: #666;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 30px;
+}
 }
 
 @media (min-width:991px) {
