@@ -2957,7 +2957,7 @@ section.page-main-custom.page-section.grid-service.image_setting .h3-bottom p {
 
 @media (max-width:1600px) {
   section.hero.hero-main-custom h3 {
-    font-size: 28px;
+    font-size: 28px !important;
 }
   .footer-certificates img {
     max-height: 50px;
