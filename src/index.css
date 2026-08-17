@@ -3202,7 +3202,11 @@ body .InfoGrid-cardDescription {
 }
 section.page-main-custom.page-section.grid-service.grid2 .page-section__heading {
     max-width: 100%;
-}  
+}
+  .footer-certificates {
+   gap: 30px;
+   
+}
 }
 
 @media (min-width:991px) {
