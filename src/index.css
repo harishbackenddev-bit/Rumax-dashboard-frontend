@@ -273,6 +273,9 @@
   width: min(var(--container), calc(100% - (var(--gutter) * 2))) !important;
   margin: 0 auto;
 }
+.investigator-trial-page .logo-main {
+    background-color: transparent;
+}
 /* ============================================
    UTILITY CLASSES
    ============================================ */
