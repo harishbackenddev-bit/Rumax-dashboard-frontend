@@ -16,7 +16,7 @@ interface GridSectionProps {
 
 const GridSection: React.FC<GridSectionProps> = ({
   title = "Our Mobile Research Nurse Capabilities",
-  description = "We provide highly trained mobile research nurses who act as a seamless extension of your investigator site team. Here are seven key capabilities we deliver to support your clinical trials:",
+  description,
   items = [],
   bgClass = "",
 }) => {
@@ -72,7 +72,7 @@ const GridSection: React.FC<GridSectionProps> = ({
       <div className="container">
         <div className="page-section__heading">
           <h2>{title}</h2>
-          <p>{description}</p>
+          {description && <p>{description}</p>}
         </div>
         <div className="info-grid info-grid--three">
           {gridItems.map((item, index) => (
