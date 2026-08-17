@@ -3165,6 +3165,11 @@ body .InfoGrid-cardDescription {
     gap: 0px;
   
 }
+  section.hvs-section.page-main-custom.page-section.hvs-main-service .info-card__icon img {
+    width: 80px;
+    max-width: 50px;
+    height: auto;
+}
 }
 
 @media (min-width:991px) {
