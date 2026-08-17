@@ -3183,6 +3183,13 @@ body .InfoGrid-cardDescription {
     font-weight: 400;
     line-height: 30px;
 }
+  .website p, .website span, .website a {
+    font-size: 16px;
+    font-weight: 400;
+}
+  .website p {
+    line-height: 30px;
+}
 }
 
 @media (min-width:991px) {
