@@ -3184,7 +3184,7 @@ body .InfoGrid-cardDescription {
     line-height: 30px;
 }
   .website p, .website span, .website a {
-    font-size: 16px;
+    font-size: 16px !important;
     font-weight: 400;
 }
   .website p {
