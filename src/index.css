@@ -1499,7 +1499,7 @@ ul.submenu li:first-child a {
 .page-main-custom .page-section__heading h2 {
   margin-bottom: 20px;
   position: relative;
-  display: inline;
+  display: inline-block;
 }
 
 .page-main-custom .bottom-grid-area {
