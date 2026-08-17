@@ -3158,6 +3158,13 @@ body .InfoGrid-cardDescription {
 .gdpr-page .gdpr-page__h2, .gdpr-page .gdpr-page__h3 {
     font-size: 32px;
 }
+  section.page-main-custom.page-section.grid-service .info-card__icon img {
+  width: 80%;
+}
+  section.page-main-custom.page-section.grid-service .bottom-grid-area {
+    gap: 0px;
+  
+}
 }
 
 @media (min-width:991px) {
