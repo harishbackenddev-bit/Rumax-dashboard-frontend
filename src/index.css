@@ -276,6 +276,10 @@
 .investigator-trial-page .logo-main {
     background-color: transparent;
 }
+.investigator-trial-page  .logo-main .left-logo-0 p {
+   
+    color: #666;
+}
 /* ============================================
    UTILITY CLASSES
    ============================================ */
