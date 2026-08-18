@@ -269,6 +269,9 @@
     line-height: normal;
   }
 }
+img.dom-care-cqc__external {
+     filter: brightness(0) invert(1);
+}
 .container {
   width: min(var(--container), calc(100% - (var(--gutter) * 2))) !important;
   margin: 0 auto;
