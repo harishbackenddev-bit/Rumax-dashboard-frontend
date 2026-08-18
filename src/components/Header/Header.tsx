@@ -69,13 +69,14 @@ const Header = () => {
   // Dropdown items for Services
   const dropdownItems = [
     {
-      label: "Investigator Trial Location Support Service",
-      path: "/investigator-trial-location-support-service",
-    },
-    {
       label: "Clinical Trials Homecare Services",
       path: "/clinical-trials-homecare-services",
+    },
+    {
+      label: "Investigator Trial Location Support Service",
+      path: "/investigator-trial-location-support-service",
     }
+    
   ];
   return (
     <>
