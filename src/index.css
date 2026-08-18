@@ -1022,6 +1022,7 @@ section.hvs-section.hvs-main-cst.bg-hvs button.trial-btn {
 ul.submenu li:first-child a {
   color: #0845A2;
   background: #f3f9ff;
+  width: 100%;
 }
 
 .menu-close {
