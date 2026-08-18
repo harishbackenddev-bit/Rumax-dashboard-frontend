@@ -21,7 +21,7 @@ const MainFooter: React.FC = () => {
               </div>
               <hr />
               <h4>Overall: Good</h4>
-              <a href="https://www.homecare.co.uk/homecare/agency.cfm/id/65432233179" target="_blank"><img src={asset("dom-care-cqc-external.svg")} alt="" className="dom-care-cqc__external" aria-hidden="true"></a>
+              <a href="https://www.homecare.co.uk/homecare/agency.cfm/id/65432233179" target="_blank"><img src={asset("dom-care-cqc-external.svg")} alt="dom-care-cqc__external" className="dom-care-cqc__external" /></a>
             </div>
           </div>
 
