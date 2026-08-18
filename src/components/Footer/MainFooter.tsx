@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-
+import domCareCqcExternal from './assets/dom-care-cqc-external.svg'; 
 // Import assets (adjust paths as needed)
 const asset = (path: string) => `/images/${path}`;
 
@@ -21,6 +21,7 @@ const MainFooter: React.FC = () => {
               </div>
               <hr />
               <h4>Overall: Good</h4>
+              <img src={domCareCqcExternal} alt="" class="dom-care-cqc__external" aria-hidden="true">
             </div>
           </div>
 
