@@ -2967,18 +2967,21 @@ section.page-main-custom.page-section.grid-service.image_setting .h3-bottom p {
 }
 
 @media (max-width:1600px) {
- .investigator-trial-page .hero-badges {
-    flex-wrap: wrap;
-    gap: 5px;
-    display: flex;
-}
+
   .footer-col.footer-brand .bottom-foot h4 {
     margin-bottom: 0px;
 }
-  .investigator-trial-page  .hero-badge {
-    gap: 0;
-    padding: 10px 10px;
-  }
+ 
+  .website .hero-badge-content h4 {
+   
+    font-size: 12px !important;
+
+}
+  .website .hero-badge-content p {
+   
+    font-size: 12px !important;
+  
+}
   section.hero.hero-main-custom h3 {
     font-size: 28px !important;
 }
