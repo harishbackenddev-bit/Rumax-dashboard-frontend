@@ -2968,6 +2968,9 @@ section.page-main-custom.page-section.grid-service.image_setting .h3-bottom p {
     gap: 5px;
     display: flex;
 }
+  .footer-col.footer-brand .bottom-foot h4 {
+    margin-bottom: 0px;
+}
   .investigator-trial-page  .hero-badge {
     gap: 0;
     padding: 10px 10px;
