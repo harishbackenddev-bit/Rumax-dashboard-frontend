@@ -1,9 +1,8 @@
 // pages/admin/StandbyApplicants.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   Funnel,
-  Plus,
   Users,
   UserCheck,
   Zap,
@@ -13,377 +12,497 @@ import {
   Mail,
   CircleCheckBig,
   EllipsisVertical,
-  X,
-  Upload,
-  FileText,
-  CircleCheck,
-  Clock,
-  Briefcase
+  Loader2,
+  AlertCircle,
+  FileText as FileIcon
 } from 'lucide-react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// ============================================
+// TYPES - MATCHING API RESPONSE
+// ============================================
+interface Experience {
+  id: string;
+  employer: string;
+  position: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  responsibilities: string;
+  _id?: string;
+}
 
 interface StandbyApplicant {
-  id: string;
-  name: string;
+  _id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  phone: string;
   role: string;
   location: string;
-  status: 'Available' | 'Deployed' | 'Unavailable';
+  status: string;
+  standbyStatus: string;
   initials: string;
   color: string;
-  certifications: string[];
-  skills: string[];
+  certifications?: string[];
+  skills?: string[];
   availability: string;
-  experience: string;
-  phone: string;
-  email: string;
+  experience: Experience[] | string | number;
+  appliedDate: string;
+  createdAt: string;
+  updatedAt: string;
+  resumeUrl?: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  message: string;
+  data: StandbyApplicant[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 const StandbyApplicants = () => {
+  // ============================================
+  // STATE
+  // ============================================
+  const [applicants, setApplicants] = useState<StandbyApplicant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeRoleFilter, setActiveRoleFilter] = useState('All');
   const [activeStatusFilter, setActiveStatusFilter] = useState('All Status');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedApplicant, setSelectedApplicant] = useState<StandbyApplicant | null>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    total: 0,
+    totalPages: 0
+  });
 
-  // Mock data
-  const [applicants] = useState<StandbyApplicant[]>([
-    {
-      id: '1',
-      name: 'Sarah Chen',
-      role: 'Research Nurse',
-      location: 'London',
-      status: 'Available',
-      initials: 'SC',
-      color: 'rgb(96, 27, 128)',
-      certifications: ['GCP Certified', 'NMC'],
-      skills: ['Phlebotomy', 'Cardiology'],
-      availability: 'Immediate',
-      experience: '5 yrs',
-      phone: '+44 7700 900301',
-      email: 'sarah.chen@email.com'
-    },
-    {
-      id: '2',
-      name: 'Marcus Cham',
-      role: 'Research Nurse',
-      location: 'Manchester',
-      status: 'Available',
-      initials: 'MC',
-      color: 'rgb(124, 58, 237)',
-      certifications: ['GCP Certified', 'NMC'],
-      skills: ['Oncology', 'Clinical Trials'],
-      availability: '2 hrs',
-      experience: '7 yrs',
-      phone: '+44 7700 900302',
-      email: 'marcus.cham@email.com'
-    },
-    {
-      id: '3',
-      name: 'Brania Cole',
-      role: 'Research Nurse',
-      location: 'Birmingham',
-      status: 'Available',
-      initials: 'BC',
-      color: 'rgb(5, 150, 105)',
-      certifications: ['GCP Certified'],
-      skills: ['Phlebotomy', 'Cardiology'],
-      availability: 'Immediate',
-      experience: '4 yrs',
-      phone: '+44 7700 900303',
-      email: 'brania.cole@email.com'
-    },
-    {
-      id: '4',
-      name: 'Sarah Chen',
-      role: 'Research Nurse',
-      location: 'Bristol',
-      status: 'Available',
-      initials: 'SC',
-      color: 'rgb(217, 119, 6)',
-      certifications: ['GCP Certified', 'NMC'],
-      skills: ['Phlebotomy', 'Neurology'],
-      availability: 'Immediate',
-      experience: '3 yrs',
-      phone: '+44 7700 900305',
-      email: 'sarah.chen2@email.com'
-    },
-    {
-      id: '5',
-      name: 'Bernis Smith',
-      role: 'Carers',
-      location: 'London',
-      status: 'Available',
-      initials: 'BS',
-      color: 'rgb(8, 145, 178)',
-      certifications: ['Care Certificate', 'First Aid'],
-      skills: ['Dementia Care', 'Mobility'],
-      availability: '1 hr',
-      experience: '8 yrs',
-      phone: '+44 7700 900306',
-      email: 'bernis.smith@email.com'
-    },
-    {
-      id: '6',
-      name: 'Marcus Chen',
-      role: 'Research Nurse',
-      location: 'Edinburgh',
-      status: 'Available',
-      initials: 'MC',
-      color: 'rgb(220, 38, 38)',
-      certifications: ['GCP Certified', 'NMC'],
-      skills: ['Cardiology', 'ICU'],
-      availability: 'Immediate',
-      experience: '9 yrs',
-      phone: '+44 7700 900307',
-      email: 'marcus.chen@email.com'
-    },
-    {
-      id: '7',
-      name: 'Danita Nurser',
-      role: 'Carers',
-      location: 'London',
-      status: 'Available',
-      initials: 'DN',
-      color: 'rgb(22, 163, 74)',
-      certifications: ['Care Certificate'],
-      skills: ['Palliative Care', 'Elderly'],
-      availability: '2 hrs',
-      experience: '5 yrs',
-      phone: '+44 7700 900308',
-      email: 'danita.n@email.com'
-    },
-    {
-      id: '8',
-      name: 'Priya Nair',
-      role: 'Carers',
-      location: 'Birmingham',
-      status: 'Available',
-      initials: 'PN',
-      color: 'rgb(15, 76, 129)',
-      certifications: ['Care Certificate', 'NVQ L2'],
-      skills: ['Dementia Care', 'Medication'],
-      availability: 'Immediate',
-      experience: '6 yrs',
-      phone: '+44 7700 900311',
-      email: 'priya.nair@email.com'
-    },
-    {
-      id: '9',
-      name: 'Lewis Grant',
-      role: 'Support Worker',
-      location: 'Bristol',
-      status: 'Available',
-      initials: 'LG',
-      color: 'rgb(27, 34, 128)',
-      certifications: ['Care Certificate'],
-      skills: ['Autism', 'Behaviour Support'],
-      availability: '3 hrs',
-      experience: '2 yrs',
-      phone: '+44 7700 900312',
-      email: 'lewis.grant@email.com'
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // ============================================
+  // FETCH APPLICANTS
+  // ============================================
+  const fetchApplicants = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please login to view applicants');
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.append('page', pagination.page.toString());
+      params.append('limit', pagination.limit.toString());
+      
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+      if (activeRoleFilter !== 'All') {
+        params.append('role', activeRoleFilter);
+      }
+      // Fix: Use 'status' parameter instead of 'standbyStatus'
+      if (activeStatusFilter !== 'All Status') {
+        params.append('status', activeStatusFilter);
+      }
+
+      const response = await axios.get(
+        `${API_URL}/api/admin/candidates/standby?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        setApplicants(response.data.data);
+        if (response.data.pagination) {
+          setPagination({
+            page: response.data.pagination.page,
+            limit: response.data.pagination.limit,
+            total: response.data.pagination.total,
+            totalPages: response.data.pagination.totalPages
+          });
+        }
+      } else {
+        setError(response.data.message || 'Failed to fetch applicants');
+      }
+    } catch (error: any) {
+      console.error('Error fetching applicants:', error);
+      setError(error.response?.data?.message || 'Failed to fetch applicants');
+      toast.error('Failed to load standby applicants');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
-  const roleFilters = ['All', 'Research Nurse', 'Carers', 'Support Worker'];
-  const statusFilters = ['All Status', 'On Standby', 'Deployed', 'Unavailable'];
+  // ============================================
+  // UPDATE STANDBY STATUS
+  // ============================================
+  const updateStandbyStatus = async (candidateId: string, newStatus: string) => {
+    try {
+      setUpdatingStatus(candidateId);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Please login');
+        return;
+      }
 
+      const response = await axios.patch(
+        `${API_URL}/api/admin/candidate/${candidateId}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        toast.success(`Status updated to ${newStatus}`);
+        setOpenDropdownId(null);
+        fetchApplicants();
+      } else {
+        toast.error(response.data.message || 'Failed to update status');
+      }
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(error.response?.data?.message || 'Failed to update status');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  // ============================================
+  // EFFECTS
+  // ============================================
+  useEffect(() => {
+    fetchApplicants();
+  }, [pagination.page, searchQuery, activeRoleFilter, activeStatusFilter]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // ============================================
+  // COMPUTED STATS
+  // ============================================
+  const stats = {
+    total: applicants.length,
+    available: applicants.filter(a => a.status === 'Available' || a.status === 'Standby').length,
+    deployed: applicants.filter(a => a.status === 'Deployed').length,
+    unavailable: applicants.filter(a => a.status === 'Unavailable').length,
+    researchNurses: applicants.filter(a => a.role?.toLowerCase().includes('research')).length
+  };
+
+  // ============================================
+  // FILTERS
+  // ============================================
+  const getUniqueRoles = () => {
+    const roles = applicants.map(a => a.role).filter(Boolean);
+    return ['All', ...new Set(roles)];
+  };
+
+  const roleFilters = getUniqueRoles();
+  const statusFilters = ['All Status', 'Available', 'Deployed', 'Unavailable'];
+
+  // ============================================
+  // HELPERS
+  // ============================================
   const getStatusStyle = (status: string) => {
-    const styles = {
+    const styles: Record<string, { bg: string; color: string; dot: string }> = {
       'Available': { bg: 'rgb(240, 253, 244)', color: 'rgb(22, 163, 74)', dot: 'rgb(22, 163, 74)' },
+      'Standby': { bg: 'rgb(240, 253, 244)', color: 'rgb(22, 163, 74)', dot: 'rgb(22, 163, 74)' },
       'Deployed': { bg: 'rgb(239, 246, 255)', color: 'rgb(37, 99, 235)', dot: 'rgb(37, 99, 235)' },
       'Unavailable': { bg: 'rgb(254, 242, 242)', color: 'rgb(220, 38, 38)', dot: 'rgb(220, 38, 38)' }
     };
-    return styles[status as keyof typeof styles] || styles['Available'];
+    return styles[status] || styles['Available'];
   };
 
-  // Stats
-  const stats = {
-    total: applicants.length,
-    available: applicants.filter(a => a.status === 'Available').length,
-    deployed: applicants.filter(a => a.status === 'Deployed').length,
-    researchNurses: applicants.filter(a => a.role === 'Research Nurse').length
+  const getInitials = (firstName: string, lastName: string) => {
+    if (!firstName && !lastName) return '??';
+    const first = firstName?.charAt(0) || '';
+    const last = lastName?.charAt(0) || '';
+    return (first + last).toUpperCase() || '??';
   };
 
-  // Filter applicants
-  const filteredApplicants = applicants.filter(applicant => {
-    const matchesSearch = applicant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          applicant.role.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = activeRoleFilter === 'All' || applicant.role === activeRoleFilter;
-    const matchesStatus = activeStatusFilter === 'All Status' || 
-                          (activeStatusFilter === 'On Standby' && applicant.status === 'Available') ||
-                          applicant.status === activeStatusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  const getColor = (name: string) => {
+    const colors = ['#0F4C81', '#27B3C9', '#7C3AED', '#059669', '#D97706', '#DC2626', '#2563EB', '#0891B2', '#601B80', '#B45309'];
+    if (!name) return colors[0];
+    const index = (name.length || 0) % colors.length;
+    return colors[index];
+  };
 
-  // Add Member Modal
-  const AddMemberModal = () => {
-    const [formData, setFormData] = useState({
-      name: '',
-      email: '',
-      phone: '',
-      location: '',
-      skills: '',
-      experience: ''
-    });
+  const formatExperience = (exp: any): string => {
+    if (!exp) return 'N/A';
+    if (typeof exp === 'string') return exp;
+    if (typeof exp === 'number') return `${exp} yrs`;
+    if (Array.isArray(exp)) {
+      if (exp.length === 0) return 'N/A';
+      let totalYears = 0;
+      exp.forEach((item: any) => {
+        if (item.startDate) {
+          const start = new Date(item.startDate);
+          const end = item.current ? new Date() : (item.endDate ? new Date(item.endDate) : new Date());
+          const years = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+          if (years > 0) totalYears += years;
+        }
+      });
+      if (totalYears === 0) {
+        return `${exp.length} role${exp.length > 1 ? 's' : ''}`;
+      }
+      return `${Math.round(totalYears)} yrs`;
+    }
+    return 'N/A';
+  };
 
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      // Handle form submission
-      console.log('Adding member:', formData);
-      setShowAddModal(false);
-    };
+  const getCertifications = (applicant: StandbyApplicant): string[] => {
+    if (applicant.certifications && applicant.certifications.length > 0) {
+      return applicant.certifications;
+    }
+    if (Array.isArray(applicant.experience)) {
+      const certs: string[] = [];
+      applicant.experience.forEach((exp: any) => {
+        if (exp.certifications) {
+          certs.push(...exp.certifications);
+        }
+      });
+      return certs.length > 0 ? certs : ['GCP Certified'];
+    }
+    return ['GCP Certified'];
+  };
+
+  const getSkills = (applicant: StandbyApplicant): string[] => {
+    if (applicant.skills && applicant.skills.length > 0) {
+      return applicant.skills;
+    }
+    if (Array.isArray(applicant.experience)) {
+      const skills: string[] = [];
+      applicant.experience.forEach((exp: any) => {
+        if (exp.skills) {
+          skills.push(...exp.skills);
+        }
+        if (exp.position) {
+          skills.push(exp.position);
+        }
+        if (exp.responsibilities) {
+          const respWords = exp.responsibilities.split(',').map((s: string) => s.trim());
+          respWords.forEach((word: string) => {
+            if (word.length > 2 && !skills.includes(word)) {
+              skills.push(word);
+            }
+          });
+        }
+      });
+      return skills.length > 0 ? skills : ['Phlebotomy', 'Clinical Trials'];
+    }
+    return ['Phlebotomy', 'Clinical Trials'];
+  };
+
+  // ============================================
+  // DROPDOWN MENU COMPONENT
+  // ============================================
+  const DropdownMenu = ({ applicant }: { applicant: StandbyApplicant }) => {
+    const isOpen = openDropdownId === applicant._id;
+    const currentStatus = applicant.status || applicant.standbyStatus || 'Standby';
+
+    const menuItems = [
+      {
+        label: 'View Resume',
+        icon: <FileIcon size={14} stroke="#601B80" strokeWidth={2} />,
+        onClick: () => {
+          if (applicant.resumeUrl) {
+            window.open(`${API_URL}${applicant.resumeUrl}`, '_blank');
+          } else {
+            // toast.info('No resume uploaded');
+          }
+          setOpenDropdownId(null);
+        }
+      },
+      { divider: true },
+      {
+        label: 'Mark as Deployed',
+        icon: <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgb(37, 99, 235)', display: 'inline-block', flexShrink: 0 }} />,
+        onClick: () => updateStandbyStatus(applicant._id, 'Deployed'),
+        color: 'rgb(37, 99, 235)',
+        disabled: currentStatus === 'Deployed'
+      },
+      {
+        label: 'Mark as Unavailable',
+        icon: <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgb(107, 114, 128)', display: 'inline-block', flexShrink: 0 }} />,
+        onClick: () => updateStandbyStatus(applicant._id, 'Unavailable'),
+        color: 'rgb(107, 114, 128)',
+        disabled: currentStatus === 'Unavailable'
+      },
+      {
+        label: 'Mark as Available',
+        icon: <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgb(22, 163, 74)', display: 'inline-block', flexShrink: 0 }} />,
+        onClick: () => updateStandbyStatus(applicant._id, 'Available'),
+        color: 'rgb(22, 163, 74)',
+        disabled: currentStatus === 'Available' || currentStatus === 'Standby'
+      }
+    ];
 
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-[80] p-4" style={{ background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(4px)' }}>
-        <div className="flex flex-col rounded-2xl overflow-hidden w-full" style={{ maxWidth: '520px', maxHeight: '90vh', background: 'rgb(255, 255, 255)', border: '1px solid rgb(228, 233, 244)' }}>
-          <div className="flex items-center justify-between px-5 sm:px-6 py-5 shrink-0" style={{ borderBottom: '1px solid rgb(238, 241, 251)', background: 'rgb(96, 27, 128)' }}>
-            <div>
-              <p style={{ fontSize: '16px', fontWeight: 800, color: 'rgb(255, 255, 255)' }}>Add Standby Applicant</p>
-              <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.65)', fontWeight: 400, marginTop: '2px' }}>Fill in the details to add a new member</p>
-            </div>
-            <button 
-              onClick={() => setShowAddModal(false)}
-              style={{ background: 'rgba(255, 255, 255, 0.15)', border: 'none', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-            >
-              <X size={15} stroke="#fff" strokeWidth={2} />
-            </button>
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenDropdownId(isOpen ? null : applicant._id);
+          }}
+          style={{
+            background: 'rgb(244, 246, 252)',
+            border: 'none',
+            borderRadius: '8px',
+            width: '30px',
+            height: '30px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background 0.15s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgb(228, 233, 244)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgb(244, 246, 252)';
+          }}
+        >
+          {updatingStatus === applicant._id ? (
+            <Loader2 size={15} className="animate-spin" stroke="#7B8299" strokeWidth={2} />
+          ) : (
+            <EllipsisVertical size={15} stroke="#7B8299" strokeWidth={2} />
+          )}
+        </button>
+
+        {isOpen && !updatingStatus && (
+          <div
+            ref={dropdownRef}
+            style={{
+              position: 'absolute',
+              top: '34px',
+              right: '0px',
+              zIndex: 50,
+              background: 'rgb(255, 255, 255)',
+              border: '1px solid rgb(228, 233, 244)',
+              borderRadius: '10px',
+              minWidth: '185px',
+              boxShadow: 'rgba(0, 0, 0, 0.12) 0px 8px 24px',
+              overflow: 'hidden'
+            }}
+          >
+            {menuItems.map((item, index) => {
+              if (item.divider) {
+                return (
+                  <div
+                    key={`divider-${index}`}
+                    style={{
+                      borderTop: '1px solid rgb(238, 241, 251)',
+                      margin: '2px 0px'
+                    }}
+                  />
+                );
+              }
+
+              return (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  disabled={item.disabled}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    width: '100%',
+                    padding: '9px 14px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: item.disabled ? 'rgb(160, 170, 191)' : (item.color || 'rgb(55, 65, 81)'),
+                    background: 'none',
+                    border: 'none',
+                    cursor: item.disabled ? 'not-allowed' : 'pointer',
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap',
+                    opacity: item.disabled ? 0.5 : 1,
+                    transition: 'background 0.15s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!item.disabled) {
+                      e.currentTarget.style.background = 'rgb(248, 249, 254)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  {item.icon}
+                  {item.label}
+                  {item.disabled && (
+                    <span style={{ fontSize: '10px', color: 'rgb(160, 170, 191)', marginLeft: 'auto' }}>
+                      ✓ Current
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-          <form onSubmit={handleSubmit} className="overflow-y-auto px-5 sm:px-6 py-5 space-y-4">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgb(123, 130, 153)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Full Name *
-                </label>
-                <input 
-                  placeholder="e.g. Sarah Chen" 
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid rgb(228, 233, 244)', fontSize: '13px', color: 'rgb(13, 17, 23)', outline: 'none', fontFamily: 'Manrope, sans-serif', background: 'rgb(250, 251, 254)' }}
-                  required
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgb(123, 130, 153)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Email *
-                </label>
-                <input 
-                  type="email" 
-                  placeholder="email@example.com" 
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid rgb(228, 233, 244)', fontSize: '13px', color: 'rgb(13, 17, 23)', outline: 'none', fontFamily: 'Manrope, sans-serif', background: 'rgb(250, 251, 254)' }}
-                  required
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgb(123, 130, 153)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Phone *
-                </label>
-                <input 
-                  placeholder="+44 7700 900000" 
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid rgb(228, 233, 244)', fontSize: '13px', color: 'rgb(13, 17, 23)', outline: 'none', fontFamily: 'Manrope, sans-serif', background: 'rgb(250, 251, 254)' }}
-                  required
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgb(123, 130, 153)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Location *
-                </label>
-                <input 
-                  placeholder="e.g. London" 
-                  value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid rgb(228, 233, 244)', fontSize: '13px', color: 'rgb(13, 17, 23)', outline: 'none', fontFamily: 'Manrope, sans-serif', background: 'rgb(250, 251, 254)' }}
-                  required
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgb(123, 130, 153)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Skills * <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: '0px' }}>(comma separated)</span>
-                </label>
-                <input 
-                  placeholder="Phlebotomy, Cardiology" 
-                  value={formData.skills}
-                  onChange={(e) => setFormData({...formData, skills: e.target.value})}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid rgb(228, 233, 244)', fontSize: '13px', color: 'rgb(13, 17, 23)', outline: 'none', fontFamily: 'Manrope, sans-serif', background: 'rgb(250, 251, 254)' }}
-                  required
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgb(123, 130, 153)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Experience *
-                </label>
-                <input 
-                  placeholder="e.g. 5 yrs" 
-                  value={formData.experience}
-                  onChange={(e) => setFormData({...formData, experience: e.target.value})}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid rgb(228, 233, 244)', fontSize: '13px', color: 'rgb(13, 17, 23)', outline: 'none', fontFamily: 'Manrope, sans-serif', background: 'rgb(250, 251, 254)' }}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgb(123, 130, 153)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '10px' }}>
-                Documents
-              </p>
-              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-                <label style={{ display: 'block', cursor: 'pointer' }}>
-                  <input type="file" accept=".pdf,.jpg,.png" style={{ display: 'none' }} />
-                  <div className="flex flex-col items-center gap-2 rounded-xl py-4" style={{ border: '1.5px dashed rgb(228, 233, 244)', background: 'rgb(250, 251, 254)', transition: '0.15s' }}>
-                    <Upload size={18} stroke="#A0AABF" strokeWidth={2} />
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(123, 130, 153)' }}>OCP Certificate</p>
-                    <p style={{ fontSize: '10px', color: 'rgb(160, 170, 191)' }}>PDF, JPG or PNG</p>
-                  </div>
-                </label>
-                <label style={{ display: 'block', cursor: 'pointer' }}>
-                  <input type="file" accept=".pdf,.jpg,.png" style={{ display: 'none' }} />
-                  <div className="flex flex-col items-center gap-2 rounded-xl py-4" style={{ border: '1.5px dashed rgb(228, 233, 244)', background: 'rgb(250, 251, 254)', transition: '0.15s' }}>
-                    <Upload size={18} stroke="#A0AABF" strokeWidth={2} />
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(123, 130, 153)' }}>NMC Certificate</p>
-                    <p style={{ fontSize: '10px', color: 'rgb(160, 170, 191)' }}>PDF, JPG or PNG</p>
-                  </div>
-                </label>
-              </div>
-              <label style={{ display: 'block', cursor: 'pointer', marginTop: '8px' }}>
-                <input type="file" accept=".pdf" style={{ display: 'none' }} />
-                <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ border: '1.5px dashed rgb(228, 233, 244)', background: 'rgb(250, 251, 254)', transition: '0.15s' }}>
-                  <div className="flex items-center justify-center rounded-lg shrink-0" style={{ width: '36px', height: '36px', background: 'rgb(238, 241, 251)' }}>
-                    <FileText size={16} stroke="#A0AABF" strokeWidth={2} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(123, 130, 153)' }}>Upload CV / Resume</p>
-                    <p style={{ fontSize: '10px', color: 'rgb(160, 170, 191)', marginTop: '1px' }}>PDF only · Max 10MB</p>
-                  </div>
-                  <Upload size={15} stroke="#A0AABF" strokeWidth={2} />
-                </div>
-              </label>
-            </div>
-
-            <div className="flex gap-2.5 pt-1">
-              <button 
-                type="button" 
-                onClick={() => setShowAddModal(false)}
-                style={{ flex: '1 1 0%', padding: '10px 0px', borderRadius: '8px', border: '1.5px solid rgb(228, 233, 244)', background: 'rgb(255, 255, 255)', fontSize: '13px', fontWeight: 600, color: 'rgb(123, 130, 153)', cursor: 'pointer' }}
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                className="flex items-center justify-center gap-2"
-                style={{ flex: '2 1 0%', padding: '10px 0px', borderRadius: '8px', border: 'none', background: 'rgb(96, 27, 128)', fontSize: '13px', fontWeight: 700, color: 'rgb(255, 255, 255)', cursor: 'pointer' }}
-              >
-                <Plus size={14} stroke="currentColor" strokeWidth={2} />
-                Add Applicant
-              </button>
-            </div>
-          </form>
-        </div>
+        )}
       </div>
     );
   };
 
+  // ============================================
+  // LOADING STATE
+  // ============================================
+  if (loading && applicants.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <Loader2 size={40} className="animate-spin" style={{ color: 'rgb(96, 27, 128)' }} />
+        <p style={{ color: 'rgb(123, 130, 153)', marginTop: '16px' }}>Loading standby applicants...</p>
+      </div>
+    );
+  }
+
+  // ============================================
+  // ERROR STATE
+  // ============================================
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <AlertCircle size={40} style={{ color: 'rgb(220, 38, 38)' }} />
+        <p style={{ color: 'rgb(220, 38, 38)', marginTop: '16px' }}>{error}</p>
+        <button 
+          onClick={fetchApplicants}
+          style={{ marginTop: '12px', padding: '10px 24px', background: 'rgb(96, 27, 128)', color: 'rgb(255, 255, 255)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  // ============================================
+  // MAIN RENDER
+  // ============================================
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -416,14 +535,6 @@ const StandbyApplicants = () => {
             >
               <Funnel size={13} stroke="currentColor" strokeWidth={2} />
               Filter
-            </button>
-            <button 
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 rounded-xl flex-1 sm:flex-initial justify-center"
-              style={{ height: '40px', background: 'rgb(96, 27, 128)', color: 'rgb(255, 255, 255)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: 'none', whiteSpace: 'nowrap' }}
-            >
-              <Plus size={14} stroke="currentColor" strokeWidth={2} />
-              Add Member
             </button>
           </div>
         </div>
@@ -469,49 +580,50 @@ const StandbyApplicants = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Role and Status Filters */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-5 gap-3">
-        <div 
-          className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto"
-          style={{ background: 'rgb(255, 255, 255)', border: '1px solid rgb(228, 233, 244)', WebkitOverflowScrolling: 'touch' }}
-        >
-          {roleFilters.map((role) => {
-            const isActive = activeRoleFilter === role;
-            const count = role === 'All' ? applicants.length : applicants.filter(a => a.role === role).length;
-            return (
-              <button
-                key={role}
-                onClick={() => setActiveRoleFilter(role)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg shrink-0"
-                style={{ 
-                  fontSize: '12.5px', 
-                  fontWeight: isActive ? 700 : 500,
-                  background: isActive ? 'rgb(96, 27, 128)' : 'transparent',
-                  color: isActive ? 'rgb(255, 255, 255)' : 'rgb(123, 130, 153)',
-                  cursor: 'pointer',
-                  border: 'none',
-                  transition: '0.15s',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {role}
-                <span 
-                  className="rounded-full px-1.5"
-                  style={{ 
-                    fontSize: '10px', 
-                    fontWeight: 800, 
-                    background: isActive ? 'rgba(255, 255, 255, 0.2)' : 'rgb(238, 241, 251)',
-                    color: isActive ? 'rgb(255, 255, 255)' : 'rgb(123, 130, 153)',
-                    minWidth: '18px', 
-                    textAlign: 'center' 
-                  }}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Role filter tabs - keep "All" only */}
+<div
+  className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto"
+  style={{
+    background: 'rgb(255, 255, 255)',
+    border: '1px solid rgb(228, 233, 244)',
+    WebkitOverflowScrolling: 'touch'
+  }}
+>
+  <button
+    onClick={() => setActiveRoleFilter('All')}
+    className="flex items-center gap-2 px-4 py-2 rounded-lg shrink-0"
+    style={{
+      fontSize: '12.5px',
+      fontWeight: 700,
+      background: 'rgb(96, 27, 128)',
+      color: 'rgb(255, 255, 255)',
+      cursor: 'pointer',
+      border: 'none',
+      transition: '0.15s',
+      whiteSpace: 'nowrap'
+    }}
+  >
+    All
+
+    <span
+      className="rounded-full px-1.5"
+      style={{
+        fontSize: '10px',
+        fontWeight: 800,
+        background: 'rgba(255, 255, 255, 0.2)',
+        color: 'rgb(255, 255, 255)',
+        minWidth: '18px',
+        textAlign: 'center'
+      }}
+    >
+      {applicants.length}
+    </span>
+  </button>
+</div>
+        
+        {/* Status filters */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {statusFilters.map((status) => (
             <button
@@ -537,119 +649,175 @@ const StandbyApplicants = () => {
 
       {/* Applicants Grid */}
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))' }}>
-        {filteredApplicants.map((applicant) => {
-          const statusStyle = getStatusStyle(applicant.status);
-          return (
-            <div 
-              key={applicant.id} 
-              className="rounded-2xl flex flex-col"
-              style={{ background: 'rgb(255, 255, 255)', border: '1px solid rgb(228, 233, 244)', overflow: 'hidden', transition: 'transform 0.15s' }}
-            >
-              <div style={{ height: '4px', background: applicant.color }} />
-              <div className="p-4 flex-1 flex flex-col">
-                {/* Header */}
-                <div className="flex items-start gap-3 mb-3">
-                  <div 
-                    className="flex items-center justify-center rounded-2xl shrink-0"
-                    style={{ width: '48px', height: '48px', background: applicant.color, color: 'rgb(255, 255, 255)', fontSize: '15px', fontWeight: 800 }}
-                  >
-                    {applicant.initials}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p style={{ fontSize: '14px', fontWeight: 800, color: 'rgb(13, 17, 23)', lineHeight: 1.2 }} className="truncate">{applicant.name}</p>
-                    <p style={{ fontSize: '11.5px', color: 'rgb(123, 130, 153)', fontWeight: 500, marginTop: '1px' }} className="truncate">{applicant.role}</p>
-                    <div className="flex items-center gap-1 mt-1" style={{ fontSize: '11px', color: 'rgb(160, 170, 191)' }}>
-                      <MapPin size={9} stroke="currentColor" strokeWidth={2} />
-                      {applicant.location}
+        {applicants.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <Users size={48} stroke="#A0AABF" strokeWidth={1.5} />
+            <p style={{ color: 'rgb(123, 130, 153)', marginTop: '12px', fontSize: '16px', fontWeight: 600 }}>No applicants found</p>
+            <p style={{ color: 'rgb(160, 170, 191)', fontSize: '13px' }}>Try adjusting your filters or search query</p>
+          </div>
+        ) : (
+          applicants.map((applicant) => {
+            const displayStatus = applicant.status || applicant.standbyStatus || 'Standby';
+            const statusStyle = getStatusStyle(displayStatus);
+            const color = applicant.color || getColor(applicant.fullName);
+            const initials = applicant.initials || getInitials(applicant.firstName, applicant.lastName);
+            const certifications = getCertifications(applicant);
+            const skills = getSkills(applicant);
+            const experienceDisplay = formatExperience(applicant.experience);
+            
+            return (
+              <div 
+                key={applicant._id} 
+                className="rounded-2xl flex flex-col"
+                style={{ background: 'rgb(255, 255, 255)', border: '1px solid rgb(228, 233, 244)', overflow: 'hidden', transition: 'transform 0.15s' }}
+              >
+                <div style={{ height: '4px', background: color }} />
+                <div className="p-4 flex-1 flex flex-col">
+                  {/* Header */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <div 
+                      className="flex items-center justify-center rounded-2xl shrink-0"
+                      style={{ width: '48px', height: '48px', background: color, color: 'rgb(255, 255, 255)', fontSize: '15px', fontWeight: 800 }}
+                    >
+                      {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p style={{ fontSize: '14px', fontWeight: 800, color: 'rgb(13, 17, 23)', lineHeight: 1.2 }} className="truncate">{applicant.fullName}</p>
+                      <p style={{ fontSize: '11.5px', color: 'rgb(123, 130, 153)', fontWeight: 500, marginTop: '1px' }} className="truncate">{applicant.role || 'N/A'}</p>
+                      <div className="flex items-center gap-1 mt-1" style={{ fontSize: '11px', color: 'rgb(160, 170, 191)' }}>
+                        <MapPin size={9} stroke="currentColor" strokeWidth={2} />
+                        {applicant.location || 'N/A'}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <DropdownMenu applicant={applicant} />
+                      <span 
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                        style={{ fontSize: '10px', fontWeight: 700, background: statusStyle.bg, color: statusStyle.color, whiteSpace: 'nowrap' }}
+                      >
+                        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusStyle.dot, display: 'inline-block' }} />
+                        {displayStatus}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <button 
-                      style={{ background: 'rgb(244, 246, 252)', border: 'none', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+
+                  {/* Certifications */}
+                  {certifications.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {certifications.slice(0, 3).map((cert, index) => (
+                        <span 
+                          key={index}
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+                          style={{ fontSize: '10px', fontWeight: 700, background: 'rgb(240, 253, 244)', color: 'rgb(22, 163, 74)', border: '1px solid rgb(187, 247, 208)' }}
+                        >
+                          <CircleCheckBig size={9} stroke="currentColor" strokeWidth={2} />
+                          {cert}
+                        </span>
+                      ))}
+                      {certifications.length > 3 && (
+                        <span 
+                          className="inline-flex items-center rounded-full px-2 py-0.5"
+                          style={{ fontSize: '10px', fontWeight: 700, background: 'rgb(238, 241, 251)', color: 'rgb(96, 27, 128)' }}
+                        >
+                          +{certifications.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Skills */}
+                  {skills.length > 0 && (
+                    <div className="mb-3">
+                      <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(160, 170, 191)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>
+                        Skills
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {skills.slice(0, 4).map((skill, index) => (
+                          <span 
+                            key={index}
+                            className="rounded-full px-2.5 py-0.5"
+                            style={{ fontSize: '11px', fontWeight: 600, background: 'rgb(238, 241, 251)', color: 'rgb(96, 27, 128)' }}
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                        {skills.length > 4 && (
+                          <span 
+                            className="rounded-full px-2.5 py-0.5"
+                            style={{ fontSize: '11px', fontWeight: 600, background: 'rgb(238, 241, 251)', color: 'rgb(96, 27, 128)' }}
+                          >
+                            +{skills.length - 4}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Availability & Experience */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex-1 rounded-xl p-2 text-center" style={{ background: 'rgb(248, 249, 254)', border: '1px solid rgb(228, 233, 244)' }}>
+                      <p style={{ fontSize: '10px', color: 'rgb(160, 170, 191)', fontWeight: 600 }}>Available</p>
+                      <p style={{ fontSize: '12px', fontWeight: 800, color: 'rgb(13, 17, 23)' }}>{applicant.availability || 'Immediate'}</p>
+                    </div>
+                    <div className="flex-1 rounded-xl p-2 text-center" style={{ background: 'rgb(248, 249, 254)', border: '1px solid rgb(228, 233, 244)' }}>
+                      <p style={{ fontSize: '10px', color: 'rgb(160, 170, 191)', fontWeight: 600 }}>Experience</p>
+                      <p style={{ fontSize: '12px', fontWeight: 800, color: 'rgb(13, 17, 23)' }}>{experienceDisplay}</p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-auto">
+                    <a 
+                      href={`tel:${applicant.phone}`} 
+                      className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl"
+                      style={{ background: 'rgb(96, 27, 128)', color: 'rgb(255, 255, 255)', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', border: 'none', textDecoration: 'none' }}
                     >
-                      <EllipsisVertical size={15} stroke="#7B8299" strokeWidth={2} />
-                    </button>
-                    <span 
-                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                      style={{ fontSize: '10px', fontWeight: 700, background: statusStyle.bg, color: statusStyle.color, whiteSpace: 'nowrap' }}
+                      <Phone size={13} stroke="currentColor" strokeWidth={2} />
+                      Call
+                    </a>
+                    <a 
+                      href={`mailto:${applicant.email}`} 
+                      className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl"
+                      style={{ background: 'rgb(238, 241, 251)', color: 'rgb(96, 27, 128)', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', border: '1.5px solid rgb(199, 210, 246)', textDecoration: 'none' }}
                     >
-                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusStyle.dot, display: 'inline-block' }} />
-                      {applicant.status}
-                    </span>
+                      <Mail size={13} stroke="currentColor" strokeWidth={2} />
+                      Email
+                    </a>
                   </div>
-                </div>
-
-                {/* Certifications */}
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {applicant.certifications.map((cert, index) => (
-                    <span 
-                      key={index}
-                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-                      style={{ fontSize: '10px', fontWeight: 700, background: 'rgb(240, 253, 244)', color: 'rgb(22, 163, 74)', border: '1px solid rgb(187, 247, 208)' }}
-                    >
-                      <CircleCheckBig size={9} stroke="currentColor" strokeWidth={2} />
-                      {cert}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Skills */}
-                <div className="mb-3">
-                  <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(160, 170, 191)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '5px' }}>
-                    Skills
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {applicant.skills.map((skill, index) => (
-                      <span 
-                        key={index}
-                        className="rounded-full px-2.5 py-0.5"
-                        style={{ fontSize: '11px', fontWeight: 600, background: 'rgb(238, 241, 251)', color: 'rgb(96, 27, 128)' }}
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Availability & Experience */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1 rounded-xl p-2 text-center" style={{ background: 'rgb(248, 249, 254)', border: '1px solid rgb(228, 233, 244)' }}>
-                    <p style={{ fontSize: '10px', color: 'rgb(160, 170, 191)', fontWeight: 600 }}>Available</p>
-                    <p style={{ fontSize: '12px', fontWeight: 800, color: 'rgb(13, 17, 23)' }}>{applicant.availability}</p>
-                  </div>
-                  <div className="flex-1 rounded-xl p-2 text-center" style={{ background: 'rgb(248, 249, 254)', border: '1px solid rgb(228, 233, 244)' }}>
-                    <p style={{ fontSize: '10px', color: 'rgb(160, 170, 191)', fontWeight: 600 }}>Experience</p>
-                    <p style={{ fontSize: '12px', fontWeight: 800, color: 'rgb(13, 17, 23)' }}>{applicant.experience}</p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 mt-auto">
-                  <a 
-                    href={`tel:${applicant.phone}`} 
-                    className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl"
-                    style={{ background: 'rgb(96, 27, 128)', color: 'rgb(255, 255, 255)', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', border: 'none', textDecoration: 'none' }}
-                  >
-                    <Phone size={13} stroke="currentColor" strokeWidth={2} />
-                    Call
-                  </a>
-                  <a 
-                    href={`mailto:${applicant.email}`} 
-                    className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl"
-                    style={{ background: 'rgb(238, 241, 251)', color: 'rgb(96, 27, 128)', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', border: '1.5px solid rgb(199, 210, 246)', textDecoration: 'none' }}
-                  >
-                    <Mail size={13} stroke="currentColor" strokeWidth={2} />
-                    Email
-                  </a>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
-      {/* Add Member Modal */}
-      {showAddModal && <AddMemberModal />}
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between gap-4 mt-6 pt-4" style={{ borderTop: '1px solid rgb(228, 233, 244)' }}>
+          <p style={{ fontSize: '13px', color: 'rgb(123, 130, 153)' }}>
+            Showing {applicants.length} of {pagination.total} applicants
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+              disabled={pagination.page === 1}
+              style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid rgb(228, 233, 244)', background: 'rgb(255, 255, 255)', cursor: pagination.page === 1 ? 'not-allowed' : 'pointer', opacity: pagination.page === 1 ? 0.5 : 1 }}
+            >
+              Previous
+            </button>
+            <span style={{ padding: '8px 16px', borderRadius: '8px', background: 'rgb(96, 27, 128)', color: 'rgb(255, 255, 255)', fontWeight: 600 }}>
+              {pagination.page}
+            </span>
+            <button
+              onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.totalPages, prev.page + 1) }))}
+              disabled={pagination.page === pagination.totalPages}
+              style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid rgb(228, 233, 244)', background: 'rgb(255, 255, 255)', cursor: pagination.page === pagination.totalPages ? 'not-allowed' : 'pointer', opacity: pagination.page === pagination.totalPages ? 0.5 : 1 }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

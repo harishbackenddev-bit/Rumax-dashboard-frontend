@@ -101,10 +101,11 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   
   // Interview form state
   const [interviewData, setInterviewData] = useState({
-    date: '',
-    time: '',
+    interviewDate: '',
+    interviewTime: '',
     interviewer: '',
-    format: 'Video Call (Teams)'
+    format: 'Video Call (Teams)',
+    status:'Interview Scheduled'
   });
   
   // Document request state
@@ -395,7 +396,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       }
 
       const response = await axios.patch(
-        `${API_URL}/api/admin/candidate/status`,
+           `${API_URL}/api/admin/candidate/${candidate._id}/status`,
         { 
           status: 'Standby',
           notes: standbyReason
@@ -420,7 +421,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   // Schedule Interview
   const handleScheduleInterview = async () => {
-    if (!interviewData.date || !interviewData.time || !interviewData.interviewer) {
+    if (!interviewData.interviewDate || !interviewData.interviewTime || !interviewData.interviewer) {
       toast.error('Please fill in all interview details');
       return;
     }
@@ -434,8 +435,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         return;
       }
 
-      const response = await axios.post(
-        `${API_URL}/api/admin/candidate/${candidate._id}/schedule-interview`,
+      const response = await axios.patch(
+        `${API_URL}/api/admin/candidate/${candidate._id}/status`,
         {
           ...interviewData,
           candidateName: fullName
@@ -446,7 +447,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       if (response.data.success) {
         toast.success('Interview scheduled successfully!');
         setShowInterviewModal(false);
-        setInterviewData({ date: '', time: '', interviewer: '', format: 'Video Call (Teams)' });
+        setInterviewData({ interviewDate: '', interviewTime: '', interviewer: '', format: 'Video Call (Teams)', status: 'Interview Scheduled' });
         onStatusUpdate?.();
         await fetchCandidateData();
       }
@@ -474,13 +475,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         return;
       }
 
-      const response = await axios.post(
-        `${API_URL}/api/admin/candidates/document-request`,
+      const response = await axios.patch(
+        `${API_URL}/api/admin/candidate/${candidate._id}/status`,
         {
           candidateId: candidate._id,
           documents: selectedDocuments,
           note: documentNote,
-          candidateName: fullName
+          candidateName: fullName,
+          status: 'Document Requested'
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -845,8 +847,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             </label>
             <input
               type="date"
-              value={interviewData.date}
-              onChange={(e) => setInterviewData({ ...interviewData, date: e.target.value })}
+              value={interviewData.interviewDate}
+              onChange={(e) => setInterviewData({ ...interviewData, interviewDate: e.target.value })}
               className="w-full rounded-xl px-3 py-2.5"
               style={{ border: '1.5px solid rgb(228, 233, 244)', background: 'rgb(248, 249, 254)', fontSize: '13px', color: 'rgb(13, 17, 23)', outline: 'none', fontFamily: 'Manrope, sans-serif' }}
             />
@@ -858,8 +860,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             </label>
             <input
               type="time"
-              value={interviewData.time}
-              onChange={(e) => setInterviewData({ ...interviewData, time: e.target.value })}
+              value={interviewData.interviewTime}
+              onChange={(e) => setInterviewData({ ...interviewData, interviewTime: e.target.value })}
               className="w-full rounded-xl px-3 py-2.5"
               style={{ border: '1.5px solid rgb(228, 233, 244)', background: 'rgb(248, 249, 254)', fontSize: '13px', color: 'rgb(13, 17, 23)', outline: 'none', fontFamily: 'Manrope, sans-serif' }}
             />
