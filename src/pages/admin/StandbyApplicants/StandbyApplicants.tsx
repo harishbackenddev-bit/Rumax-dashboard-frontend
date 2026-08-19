@@ -651,7 +651,7 @@ const StandbyApplicants = () => {
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))' }}>
         {applicants.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <Users size={48} stroke="#A0AABF" strokeWidth={1.5} />
+           
             <p style={{ color: 'rgb(123, 130, 153)', marginTop: '12px', fontSize: '16px', fontWeight: 600 }}>No applicants found</p>
             <p style={{ color: 'rgb(160, 170, 191)', fontSize: '13px' }}>Try adjusting your filters or search query</p>
           </div>
