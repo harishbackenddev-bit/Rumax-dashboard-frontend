@@ -100,7 +100,90 @@ function Investigatorsites() {
 
   return (
     <div className="investigator-trial-page">
-      <CroHero />
+      <section className="hero-main-custom">
+      <div className="hero">
+        <div className="container">
+          <div className="hero-content">
+
+            <h1>CROs &amp; Sponsors</h1>
+
+            <h3>
+              A specialist UK homecare partner built for decentralised and
+              hybrid trials.
+            </h3>
+
+            <div className="hero-badges">
+
+              <div className="hero-badge">
+                <div className="hero-badge-icon">
+                  ✓
+                </div>
+                <div className="hero-badge-content">
+                  <h4>NMC Registered Nurses</h4>
+                </div>
+              </div>
+
+              <div className="hero-badge">
+                <div className="hero-badge-icon">
+                  ✓
+                </div>
+                <div className="hero-badge-content">
+                  <h4>GCP Certified</h4>
+                </div>
+              </div>
+
+              <div className="hero-badge">
+                <div className="hero-badge-icon">
+                  ✓
+                </div>
+                <div className="hero-badge-content">
+                  <h4>HRA-Aligned</h4>
+                </div>
+              </div>
+
+              <div className="hero-badge">
+                <div className="hero-badge-icon">
+                  ✓
+                </div>
+                <div className="hero-badge-content">
+                  <h4>UK-wide</h4>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="hero-stats">
+
+        <div className="hero-stat">
+          <h2>15+</h2>
+          <p>Years In Clinical-Trials Homecare</p>
+        </div>
+
+        <div className="hero-stat">
+          <h2>1000+</h2>
+          <p>Home Visits</p>
+        </div>
+
+        <div className="hero-stat">
+          <h2>12+</h2>
+          <p>NHS Trusts</p>
+        </div>
+
+        <div className="hero-stat">
+          <h2>6</h2>
+          <p>Milestone Onboarding Stages</p>
+        </div>
+
+        <div className="hero-stat">
+          <h2>UK</h2>
+          <p>Nationwide</p>
+        </div>
+
+      </div>
+    </section>
 
       <LogoSection logos={logos} />
       <ServiceOfferingBlock />
