@@ -100,7 +100,7 @@ function Investigatorsites() {
 
   return (
     <div className="investigator-trial-page">
-      <section className="hero-main-custom">
+      <section className="hero-main-custom firstsec">
       <div className="hero">
         <div className="container">
           <div className="hero-content">
@@ -185,7 +185,132 @@ function Investigatorsites() {
     </section>
 
       <LogoSection logos={logos} />
-      <ServiceOfferingBlock />
+       <section className="Service-main-custom">
+      <div className="container">
+
+        <div className="ServiceOfferingBlock">
+
+          {/* LEFT SIDE */}
+          <div className="ServiceOfferingBlock-left">
+
+            <span className="ServiceOfferingBlock-pill">
+              Our Service Offering
+            </span>
+
+            <h1 className="ServiceOfferingBlock-title">
+              Additional clinical capacity exactly where it is needed.
+            </h1>
+
+            <p className="ServiceOfferingBlock-description">
+              Rumax works alongside investigator sites, research-active NHS Trusts, and Patient Identification Centres to provide additional clinical capacity exactly where it is needed. Our research nurses help sites take on, retain, and complete studies that might otherwise strain existing resources.
+            </p>
+
+           
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="ServiceOfferingBlock-right">
+
+            <div className="ServiceOfferingBlock-card">
+              <span className="ServiceOfferingBlock-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+
+              <p>
+                Supplementary research-nurse capacity for site-based and home-based visits, easing pressure on substantive teams.
+              </p>
+            </div>
+
+            <div className="ServiceOfferingBlock-card">
+              <span className="ServiceOfferingBlock-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+
+              <p>
+                Home-visit delivery on behalf of the site, reducing participant travel and supporting hard-to-reach or vulnerable populations.
+              </p>
+            </div>
+
+            <div className="ServiceOfferingBlock-card">
+              <span className="ServiceOfferingBlock-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+
+              <p>
+                Cover for peaks in workload, staff absence, and overlapping study start-ups, maintaining visit-window compliance.
+              </p>
+            </div>
+
+            <div className="ServiceOfferingBlock-card">
+              <span className="ServiceOfferingBlock-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+
+              <p>
+              Experienced support for sample handling, IMP administration, and protocol assessments, completed to the site's standards and SOPs.
+              </p>
+            </div>
+
+            <div className="ServiceOfferingBlock-card">
+              <span className="ServiceOfferingBlock-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </span>
+
+              <p>
+                Continuity of named, consistent nursing staff for participants across the life of a study.
+              </p>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+    </section>
 <GridSection
   title="An extension of your study team, not a transactional supplier.   "
   description="We position ourselves as an extension of your study team, not a transactional supplier. Our partnership model is built on delegated oversight, 
