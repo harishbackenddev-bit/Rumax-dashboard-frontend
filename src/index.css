@@ -320,7 +320,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="time"]::-webkit-calendar-picker-indicator {
   opacity: 0;
 }
-
+section.hero-main-custom.firstsec .hero-badge-icon {
+    height: auto;
+}
 .swiper-button-disabled {
   opacity: 0.6;
   cursor: not-allowed;
