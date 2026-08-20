@@ -311,15 +311,159 @@ function Investigatorsites() {
         </div>
       </div>
     </section>
-<GridSection
-  title="An extension of your study team, not a transactional supplier.   "
-  description="We position ourselves as an extension of your study team, not a transactional supplier. Our partnership model is built on delegated oversight, 
-transparent quality reporting, and a relationship that scales from a single site to a national programme."
-  items={clinicalCapabilities}
-/>
+<section className="page-main-custom page-section grid-service image_setting investigatorsec">
+      <div className="container">
+
+        <div className="page-section__heading">
+          <h2>
+            The site retains control while gaining capacity.
+          </h2>
+
+          <p>
+           We work under the site's direction and the Principal Investigator's oversight. Rumax nurses operate on the site delegation log and within the 
+site's governance framework, so the site retains control while gaining capacity.
+          </p>
+        </div>
+
+        <div className="info-grid info-grid--three">
+
+          <article className="info-card">
+            <div className="bottom-grid-area">
+              <div className="info-card__icon info-card__icon--blue">
+                <img src="/images/logo26.png" alt="" />
+              </div>
+
+              <div className="h3-bottom">
+                <p>
+                  Clear delegation and oversight: our nurses are accountable to the PI for trial-related duties and to Rumax for HR, training, and conduct.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article className="info-card">
+            <div className="bottom-grid-area">
+              <div className="info-card__icon info-card__icon--blue">
+                <img src="/images/logo27.png" alt="" />
+              </div>
+
+              <div className="h3-bottom">
+                <p>
+                  Documented competency and GCP training evidence provided up front, so site set-up is fast and inspection-ready.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article className="info-card">
+            <div className="bottom-grid-area">
+              <div className="info-card__icon info-card__icon--blue">
+                <img src="/images/logo28.png" alt="" />
+              </div>
+
+              <div className="h3-bottom">
+                <p>
+                  Flexible engagement — from a single study or visit type to ongoing programmatic support across a research portfolio.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article className="info-card">
+            <div className="bottom-grid-area">
+              <div className="info-card__icon info-card__icon--blue">
+                <img src="/images/logo29.png" alt="" />
+              </div>
+
+              <div className="h3-bottom">
+                <p>
+                  Transparent communication with research delivery teams, R&D offices, and study coordinators.
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article className="info-card">
+            <div className="bottom-grid-area">
+              <div className="info-card__icon info-card__icon--blue">
+                <img src="/images/logo30.png" alt="" />
+              </div>
+
+              <div className="h3-bottom">
+                <p>
+                  Rumax understands HRA approvals, the site delegation log, local R&D processes, and NMC professional standards. We slot into existing site governance rather than asking sites to work around us.
+                </p>
+              </div>
+            </div>
+          </article>
+
+  
+
+        </div>
+      </div>
+    </section>
+ <section className="Onboarding_main_Process infrastructure">
+      <div className="container">
+
+        <div className="OnboardingProcess">
+
+          <h1 className="OnboardingProcess-title">
+            Fast to set up. Built to last.
+          </h1>
 
 
-      <OnboardingProcess />
+          <div className="OnboardingProcess-timeline">
+            <div className="OnboardingProcess-node">1</div>
+            <div className="OnboardingProcess-node">2</div>
+            <div className="OnboardingProcess-node">3</div>
+            <div className="OnboardingProcess-node">4</div>
+            <div className="OnboardingProcess-node">5</div>
+          
+          </div>
+
+          <div className="OnboardingProcess-cards">
+
+            <div className="OnboardingProcess-card">
+              <h3>Scoping conversation</h3>
+              <p>
+               We discuss the study, the gap to be filled, visit types, and the governance route (sponsor-direct, CRO, or site-direct engagement).
+              </p>
+            </div>
+
+            <div className="OnboardingProcess-card">
+              <h3>Agreements & Information Governance</h3>
+              <p>
+                Confidentiality and any required data-sharing / honorary-arrangement documentation completed in line with Trust requirements.
+              </p>
+            </div>
+
+            <div className="OnboardingProcess-card">
+              <h3>Evidence & assurance</h3>
+              <p>
+                We provide nurse NMC registration, DBS, occupational-health, training, and competency records for site files.
+              </p>
+            </div>
+
+            <div className="OnboardingProcess-card">
+              <h3>Delegation & Training</h3>
+              <p>
+                Nurses added to the delegation log, complete protocol and site-specific training, and are signed off by the PI.
+              </p>
+            </div>
+
+            <div className="OnboardingProcess-card">
+              <h3>Service Commencement</h3>
+              <p>
+                Visits delivered to the site's schedule, with agreed reporting and a review point to confirm fit.
+              </p>
+            </div>
+
+
+          </div>
+
+        </div>
+      </div>
+    </section>
       <FAQSection
         title="Frequently Asked Questions"
         faqs={myFaqs}
