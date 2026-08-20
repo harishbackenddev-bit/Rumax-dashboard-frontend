@@ -105,11 +105,10 @@ function Investigatorsites() {
         <div className="container">
           <div className="hero-content">
 
-            <h1>CROs &amp; Sponsors</h1>
+            <h1>Investigator Site & NHS Trust</h1>
 
             <h3>
-              A specialist UK homecare partner built for decentralised and
-              hybrid trials.
+             Protecting site capacity, continuity, and data quality.
             </h3>
 
             <div className="hero-badges">
