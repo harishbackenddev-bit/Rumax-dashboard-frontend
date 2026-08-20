@@ -338,7 +338,9 @@ section.hero-main-custom.firstsec .hero-badge-icon {
   background: #F0F8FF;
   z-index: 0;
 }
-
+section.Onboarding_main_Process.infrastructure .OnboardingProcess-cards {
+    grid-template-columns: repeat(5, 1fr);
+}
 /* ============================================
    BACKGROUND COLORS - LIGHT MODE
    ============================================ */
