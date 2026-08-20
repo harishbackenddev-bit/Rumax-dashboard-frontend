@@ -35,7 +35,7 @@ function Partner() {
             description:
                 "Rumax provides GCP-compliant clinical-trials homecare nurses across UK and remove England and Wales, enabling sponsors and CROs to take protocol-defined activity out of the site and into the participant's home — improving recruitment, retention, and participant experience without compromising data integrity.",
             buttonText: "Explore CRO & Sponsor Services",
-            buttonLink: "#",
+            buttonLink: "https://rumax-dashboard-frontend.vercel.app/partners/cros-sponsors",
             rightTitle: "WHAT WE PROVIDE",
             features: [
                 "In-home and remote study-visit delivery by experienced research nurses",
@@ -53,7 +53,7 @@ function Partner() {
             description:
                 "Rumax works alongside investigator sites, research-active NHS Trusts, and Patient Identification Centres to provide additional clinical capacity exactly where it is needed — helping sites take on, retain, and complete studies that might otherwise strain existing resources.",
             buttonText: "Explore Site & NHS Trust Services",
-            buttonLink: "#",
+            buttonLink: "https://rumax-dashboard-frontend.vercel.app/partners/investigator-sites",
             rightTitle: "WHAT WE PROVIDE",
             features: [
                 "Supplementary research-nurse capacity for site-based and home-based visits",
@@ -71,7 +71,7 @@ function Partner() {
             description:
                 "Global logistics, technology, and specialist-service vendors increasingly need a qualified, regulated clinical partner to deliver the in-home or in-region clinical element of a decentralised trial. Rumax provides that UK clinical capability — the trained, registered nurse at the participant's door.",
             buttonText: "Explore Global Vendor Partnership",
-            buttonLink: "#",
+            buttonLink: "https://rumax-dashboard-frontend.vercel.app/partners/global-vendors",
             rightTitle: "WHAT WE PROVIDE",
             features: [
                 "UK clinical delivery layered on vendor logistics and direct-to-participant supply",
