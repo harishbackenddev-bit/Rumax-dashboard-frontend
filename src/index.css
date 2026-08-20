@@ -272,6 +272,17 @@
 img.dom-care-cqc__external {
      filter: brightness(0) invert(1);
 }
+a.trial-btn.switch-main:hover {
+  animation: heartbeat 1s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%   { transform: scale(1); }
+  14%  { transform: scale(1.15); }
+  28%  { transform: scale(1); }
+  42%  { transform: scale(1.15); }
+  70%  { transform: scale(1); }
+}
 .container {
   width: min(var(--container), calc(100% - (var(--gutter) * 2))) !important;
   margin: 0 auto;
