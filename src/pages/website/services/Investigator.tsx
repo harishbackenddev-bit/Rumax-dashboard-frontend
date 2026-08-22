@@ -6,7 +6,7 @@ import LogoSection from "@/components/website/services/investigator/LogoSection"
 import GridSection from "@/components/website/services/investigator/GridSection";
 import ImageTextSection from "@/components/website/services/investigator/ImageTextSection";
 import FAQSection from "@/components/website/services/investigator/FAQSection";
-import SupportSection from "@/components/website/services/investigator/SupportSection";
+import SupportSection from "@/components/website/services/clinical/SupportSection";
 
 // Import images
 // (Update paths as needed)
