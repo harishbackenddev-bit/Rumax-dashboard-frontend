@@ -16,12 +16,14 @@ const MainFooter: React.FC = () => {
               <img src={asset("logo-white.png")} alt="Rumax" />
             </Link>
             <div className="bottom-foot">
+              <a href="https://www.cqc.org.uk/location/1-1285309099" target="_blank">
               <div className="cqc-card">
                 <img src={asset("cqc-rating.png")} alt="CQC Rating" />
               </div>
               <hr />
               <h4>Overall: Good</h4>
-              <a href="https://www.homecare.co.uk/homecare/agency.cfm/id/65432233179" target="_blank"><img src={asset("dom-care-cqc-external.svg")} alt="dom-care-cqc__external" className="dom-care-cqc__external" /></a>
+              <img src={asset("dom-care-cqc-external.svg")} alt="dom-care-cqc__external" className="dom-care-cqc__external" />
+                </a>
             </div>
           </div>
 
