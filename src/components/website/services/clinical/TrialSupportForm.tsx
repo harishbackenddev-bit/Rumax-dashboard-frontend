@@ -1,5 +1,5 @@
 // components/website/services/clinical/TrialSupportForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import './TrialSupportForm.css';
 
@@ -26,6 +26,9 @@ const TrialSupportForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<FormData>({
     studyPhase: [],
@@ -65,6 +68,18 @@ const TrialSupportForm: React.FC = () => {
         : [...current, value];
       return { ...prev, [field]: newValues };
     });
+  };
+
+  const handleDateClick = () => {
+    if (dateInputRef.current) {
+      dateInputRef.current.showPicker?.();
+    }
+  };
+
+  const handleTimeClick = () => {
+    if (timeInputRef.current) {
+      timeInputRef.current.showPicker?.();
+    }
   };
 
   const validateStep = () => {
@@ -111,7 +126,6 @@ const TrialSupportForm: React.FC = () => {
     }
   };
 
-  // ✅ Save to Database
   const saveToDatabase = async () => {
     setIsSubmitting(true);
     setSubmitError('');
@@ -146,7 +160,6 @@ const TrialSupportForm: React.FC = () => {
         setShowConfirmation(true);
         setCurrentStep(3);
         
-        // Reset form
         setFormData({
           studyPhase: [],
           therapeuticArea: [],
@@ -192,6 +205,22 @@ const TrialSupportForm: React.FC = () => {
       case 3: return 'Confirmation';
       default: return '';
     }
+  };
+
+  // ✅ Format date for display (YYYY-MM-DD to DD/MM/YYYY)
+  const formatDisplayDate = (date: string) => {
+    if (!date) return '';
+    const parts = date.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return date;
+  };
+
+  // ✅ Format time for display (HH:MM to HH:MM)
+  const formatDisplayTime = (time: string) => {
+    if (!time) return '';
+    return time;
   };
 
   const renderStep = () => {
@@ -345,33 +374,37 @@ const TrialSupportForm: React.FC = () => {
                 </div>
                 {errors.phoneNumber && <span className="error-message">{errors.phoneNumber}</span>}
               </div>
-              <div className="form-group">
-                <label className="form-label">Preferred Date <span className="required">*</span></label>
-                <input
-                  type="date"
-                  name="preferredDate"
-                  className={`form-input ${errors.preferredDate ? 'error' : ''}`}
-                  value={formData.preferredDate}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                />
-                {errors.preferredDate && <span className="error-message">{errors.preferredDate}</span>}
-              </div>
+              {/* ✅ Date Input - Fixed */}
+             <div className="form-group">
+  <label className="form-label">Preferred Date <span className="required">*</span></label>
+  <input
+    ref={dateInputRef}
+    type="date"
+    name="preferredDate"
+    className={`form-input ${errors.preferredDate ? 'error' : ''}`}
+    value={formData.preferredDate}
+    onChange={handleChange}
+    disabled={isSubmitting}
+  />
+  {errors.preferredDate && <span className="error-message">{errors.preferredDate}</span>}
+</div>
             </div>
 
             <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Preferred Time <span className="required">*</span></label>
-                <input
-                  type="time"
-                  name="preferredTime"
-                  className={`form-input ${errors.preferredTime ? 'error' : ''}`}
-                  value={formData.preferredTime}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                />
-                {errors.preferredTime && <span className="error-message">{errors.preferredTime}</span>}
-              </div>
+              {/* ✅ Time Input - Fixed */}
+             <div className="form-group">
+  <label className="form-label">Preferred Time <span className="required">*</span></label>
+  <input
+    ref={timeInputRef}
+    type="time"
+    name="preferredTime"
+    className={`form-input ${errors.preferredTime ? 'error' : ''}`}
+    value={formData.preferredTime}
+    onChange={handleChange}
+    disabled={isSubmitting}
+  />
+  {errors.preferredTime && <span className="error-message">{errors.preferredTime}</span>}
+</div>
               <div className="form-group">
                 <label className="form-label">Timezone</label>
                 <select
@@ -467,10 +500,10 @@ const TrialSupportForm: React.FC = () => {
                 <strong>Phone:</strong> +1 {formData.phoneNumber}
               </div>
               <div className="review-item">
-                <strong>Preferred Date:</strong> {formData.preferredDate}
+                <strong>Preferred Date:</strong> {formatDisplayDate(formData.preferredDate)}
               </div>
               <div className="review-item">
-                <strong>Preferred Time:</strong> {formData.preferredTime}
+                <strong>Preferred Time:</strong> {formatDisplayTime(formData.preferredTime)}
               </div>
             </div>
             {submitError && (
@@ -488,23 +521,19 @@ const TrialSupportForm: React.FC = () => {
 
   return (
     <div className="trial-form-container">
-      {/* Step Indicator */}
       <div className="step-indicator">
         <span className="step-text">Step {currentStep + 1} / {totalSteps}</span>
         <span className="step-text active">{getStepTitle()}</span>
       </div>
 
-      {/* Progress Bar */}
       <div className="progress-container">
         <div className="progress-bar" style={{ width: `${getProgressPercentage()}%` }}></div>
       </div>
 
-      {/* Form Content */}
       <div className="form-content">
         {renderStep()}
       </div>
 
-      {/* Navigation Buttons */}
       {currentStep < 3 && !showConfirmation && (
         <div className="form-buttons">
           {currentStep > 0 ? (
@@ -536,7 +565,6 @@ const TrialSupportForm: React.FC = () => {
         </div>
       )}
 
-      {/* Footer */}
       {currentStep < 3 && !showConfirmation && (
         <div className="form-footer">
           <div className="security-notice">

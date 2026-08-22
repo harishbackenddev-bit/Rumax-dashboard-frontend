@@ -221,7 +221,7 @@ const ReportsAnalytics = () => {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 margintop40">
         {/* Monthly Hiring Chart */}
         <div className="lg:col-span-2 rounded-2xl p-4 sm:p-5" style={{ 
           background: 'rgb(255, 255, 255)', 

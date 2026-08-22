@@ -104,10 +104,10 @@ const Hero: React.FC<HeroProps> = ({
             <h1>{title}</h1>
             <p>{description}</p>
             <div className="hero-buttons">
-              <a href="#" className="btn primary">
+              <a href="/contact-us" className="btn primary">
                 {primaryButtonText}
               </a>
-              <a href="#" className="btn secondary">
+              <a href="/careers" className="btn secondary">
                 {secondaryButtonText}
               </a>
             </div>
