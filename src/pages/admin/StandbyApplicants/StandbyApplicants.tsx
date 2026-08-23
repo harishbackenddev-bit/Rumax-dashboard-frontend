@@ -191,42 +191,57 @@ const StandbyApplicants = () => {
   // ============================================
   const handlePhotoUpload = async (file: File, applicantId: string) => {
     try {
-      setUploadingPhoto(true);
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        toast.error('Please login');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('photo', file);
-
-      const response = await axios.post(
-        `${API_URL}/api/admin/candidate/${applicantId}/photo`,
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
+        setUploadingPhoto(true);
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            toast.error('Please login');
+            return;
         }
-      );
 
-      if (response.data.success) {
-        toast.success('Photo uploaded successfully!');
-        setShowPhotoDialog(null);
-        fetchApplicants();
-      } else {
-        toast.error(response.data.message || 'Failed to upload photo');
-      }
+        // Create FormData
+        const formData = new FormData();
+        formData.append('photo', file); // Make sure the field name is 'photo'
+
+        console.log('Uploading photo for applicant:', applicantId);
+        console.log('File:', file.name, file.size, file.type);
+
+        const response = await axios.post(
+            `${API_URL}/api/admin/candidate/${applicantId}/photo`,
+            formData,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
+
+        console.log('Upload response:', response.data);
+
+        if (response.data.success) {
+            toast.success('Photo uploaded successfully!');
+            setShowPhotoDialog(null);
+            fetchApplicants(); // Refresh to show new photo
+        } else {
+            toast.error(response.data.message || 'Failed to upload photo');
+        }
     } catch (error: any) {
-      console.error('Error uploading photo:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload photo');
+        console.error('Error uploading photo:', error);
+        
+        // Check if error response exists
+        if (error.response) {
+            console.log('Error response:', error.response.data);
+            toast.error(error.response.data?.message || 'Failed to upload photo');
+        } else if (error.request) {
+            toast.error('No response from server. Please try again.');
+        } else {
+            toast.error(error.message || 'Failed to upload photo');
+        }
     } finally {
-      setUploadingPhoto(false);
+        setUploadingPhoto(false);
     }
-  };
+};
 
   // ============================================
   // HANDLE ADD PHOTO
