@@ -98,7 +98,7 @@ const isActive = (path: string) => {
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
         style={{ 
-          width: isOpen ? 'auto' : '72px',
+          width: isOpen ? '241px' : '72px',
           background: 'rgb(255, 255, 255)',
           borderRight: '1px solid rgb(238, 241, 251)',
         }}
