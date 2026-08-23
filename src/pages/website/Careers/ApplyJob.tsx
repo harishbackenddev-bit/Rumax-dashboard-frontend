@@ -1031,15 +1031,7 @@ const handleSubmit = async () => {
               <ChevronLeft className="w-5 h-5" />
               <span className="hidden sm:inline">Back to Jobs</span>
             </button>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#0F4C81]">
-                <span className="text-white font-bold text-xl">R</span>
-              </div>
-              <div>
-                <div className="font-bold text-[#0F4C81] text-lg">Rumax Limited</div>
-                <div className="text-xs text-gray-500">Careers Application</div>
-              </div>
-            </div>
+            
           </div>
           {/* <div className="flex items-center gap-2">
             <button

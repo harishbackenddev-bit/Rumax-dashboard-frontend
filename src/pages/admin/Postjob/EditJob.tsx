@@ -47,28 +47,7 @@ interface TeamMember {
 }
 
 // Static locations
-const STATIC_LOCATIONS = [
-  'London',
-  'Manchester',
-  'Birmingham',
-  'Liverpool',
-  'Leeds',
-  'Sheffield',
-  'Bristol',
-  'Nottingham',
-  'Leicester',
-  'Newcastle',
-  'Glasgow',
-  'Edinburgh',
-  'Cardiff',
-  'Belfast',
-  'Southampton',
-  'Portsmouth',
-  'Reading',
-  'Oxford',
-  'Cambridge',
-  'Brighton'
-];
+const STATIC_LOCATIONS =['London', 'South East', 'South West', 'East of England', 'West Midlands', 'East Midlands', 'Yorkshire and the Humber', 'North West', 'North East','Wales','Northern Ireland'];
 
 const EditJob = () => {
   const navigate = useNavigate();
