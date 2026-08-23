@@ -273,7 +273,7 @@ const isActive = (path: string) => {
         {/* Toggle Button */}
         <button 
           onClick={onToggle}
-          className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 items-center justify-center w-8 h-8 rounded-full shadow-lg transition-all z-40"
+          className="top15 hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 items-center justify-center w-8 h-8 rounded-full shadow-lg transition-all z-40"
           style={{ 
             background: 'rgb(96, 27, 128)',
             border: '2px solid white',
