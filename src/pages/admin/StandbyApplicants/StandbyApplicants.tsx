@@ -14,7 +14,9 @@ import {
   EllipsisVertical,
   Loader2,
   AlertCircle,
-  FileText as FileIcon
+  FileText as FileIcon,
+  Camera,
+  X
 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -56,6 +58,7 @@ interface StandbyApplicant {
   createdAt: string;
   updatedAt: string;
   resumeUrl?: string;
+  photoUrl?: string;
 }
 
 interface ApiResponse {
@@ -82,6 +85,8 @@ const StandbyApplicants = () => {
   const [activeStatusFilter, setActiveStatusFilter] = useState('All Status');
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [showPhotoDialog, setShowPhotoDialog] = useState<{ id: string; name: string } | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 12,
@@ -90,6 +95,7 @@ const StandbyApplicants = () => {
   });
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // ============================================
   // FETCH APPLICANTS
@@ -115,7 +121,6 @@ const StandbyApplicants = () => {
       if (activeRoleFilter !== 'All') {
         params.append('role', activeRoleFilter);
       }
-      // Fix: Use 'status' parameter instead of 'standbyStatus'
       if (activeStatusFilter !== 'All Status') {
         params.append('status', activeStatusFilter);
       }
@@ -179,6 +184,56 @@ const StandbyApplicants = () => {
     } finally {
       setUpdatingStatus(null);
     }
+  };
+
+  // ============================================
+  // UPLOAD PHOTO
+  // ============================================
+  const handlePhotoUpload = async (file: File, applicantId: string) => {
+    try {
+      setUploadingPhoto(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Please login');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const response = await axios.post(
+        `${API_URL}/api/admin/candidate/${applicantId}/photo`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success('Photo uploaded successfully!');
+        setShowPhotoDialog(null);
+        fetchApplicants();
+      } else {
+        toast.error(response.data.message || 'Failed to upload photo');
+      }
+    } catch (error: any) {
+      console.error('Error uploading photo:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // ============================================
+  // HANDLE ADD PHOTO
+  // ============================================
+  const handleAddPhoto = (applicantId: string, applicantName: string) => {
+    setOpenDropdownId(null);
+    setShowPhotoDialog({ id: applicantId, name: applicantName });
   };
 
   // ============================================
@@ -332,10 +387,15 @@ const StandbyApplicants = () => {
           if (applicant.resumeUrl) {
             window.open(`${API_URL}${applicant.resumeUrl}`, '_blank');
           } else {
-            // toast.info('No resume uploaded');
+            toast.info('No resume uploaded');
           }
           setOpenDropdownId(null);
         }
+      },
+      {
+        label: 'Add Photo',
+        icon: <Camera size={14} stroke="#601B80" strokeWidth={2} />,
+        onClick: () => handleAddPhoto(applicant._id, applicant.fullName),
       },
       { divider: true },
       {
@@ -471,6 +531,159 @@ const StandbyApplicants = () => {
   };
 
   // ============================================
+  // PHOTO UPLOAD DIALOG
+  // ============================================
+  const PhotoUploadDialog = () => {
+    if (!showPhotoDialog) return null;
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast.error('Please select an image file');
+          return;
+        }
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error('File size must be less than 5MB');
+          return;
+        }
+        handlePhotoUpload(file, showPhotoDialog.id);
+      }
+    };
+
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}
+        onClick={() => setShowPhotoDialog(null)}
+      >
+        <div
+          style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '420px',
+            width: '90%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            position: 'relative'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => setShowPhotoDialog(null)}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              borderRadius: '4px'
+            }}
+          >
+            <X size={20} stroke="#7B8299" />
+          </button>
+
+          <div style={{ textAlign: 'center' }}>
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'rgb(238, 241, 251)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px'
+              }}
+            >
+              <Camera size={28} stroke="#601B80" strokeWidth={1.5} />
+            </div>
+            
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: 'rgb(13, 17, 23)' }}>
+              Add Photo
+            </h3>
+            <p style={{ color: 'rgb(123, 130, 153)', marginBottom: '4px', fontSize: '14px' }}>
+              Upload a photo for <strong style={{ color: 'rgb(96, 27, 128)' }}>{showPhotoDialog.name}</strong>
+            </p>
+            <p style={{ fontSize: '12px', color: 'rgb(160, 170, 191)', marginBottom: '20px' }}>
+              JPG, PNG or GIF (max 5MB)
+            </p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileSelect}
+            />
+
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '10px',
+                border: 'none',
+                background: uploadingPhoto ? 'rgb(199, 210, 246)' : 'rgb(96, 27, 128)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
+                transition: 'background 0.15s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              {uploadingPhoto ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                'Choose Photo'
+              )}
+            </button>
+
+            <button
+              onClick={() => setShowPhotoDialog(null)}
+              disabled={uploadingPhoto}
+              style={{
+                width: '100%',
+                padding: '10px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'transparent',
+                color: 'rgb(123, 130, 153)',
+                fontWeight: 500,
+                fontSize: '13px',
+                cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
+                marginTop: '8px'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ============================================
   // LOADING STATE
   // ============================================
   if (loading && applicants.length === 0) {
@@ -582,48 +795,45 @@ const StandbyApplicants = () => {
 
       {/* Role and Status Filters */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-5 gap-3">
-        {/* Role filter tabs - keep "All" only */}
-<div
-  className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto"
-  style={{
-    background: 'rgb(255, 255, 255)',
-    border: '1px solid rgb(228, 233, 244)',
-    WebkitOverflowScrolling: 'touch'
-  }}
->
-  <button
-    onClick={() => setActiveRoleFilter('All')}
-    className="flex items-center gap-2 px-4 py-2 rounded-lg shrink-0"
-    style={{
-      fontSize: '12.5px',
-      fontWeight: 700,
-      background: 'rgb(96, 27, 128)',
-      color: 'rgb(255, 255, 255)',
-      cursor: 'pointer',
-      border: 'none',
-      transition: '0.15s',
-      whiteSpace: 'nowrap'
-    }}
-  >
-    All
-
-    <span
-      className="rounded-full px-1.5"
-      style={{
-        fontSize: '10px',
-        fontWeight: 800,
-        background: 'rgba(255, 255, 255, 0.2)',
-        color: 'rgb(255, 255, 255)',
-        minWidth: '18px',
-        textAlign: 'center'
-      }}
-    >
-      {applicants.length}
-    </span>
-  </button>
-</div>
+        <div
+          className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto"
+          style={{
+            background: 'rgb(255, 255, 255)',
+            border: '1px solid rgb(228, 233, 244)',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <button
+            onClick={() => setActiveRoleFilter('All')}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg shrink-0"
+            style={{
+              fontSize: '12.5px',
+              fontWeight: 700,
+              background: 'rgb(96, 27, 128)',
+              color: 'rgb(255, 255, 255)',
+              cursor: 'pointer',
+              border: 'none',
+              transition: '0.15s',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            All
+            <span
+              className="rounded-full px-1.5"
+              style={{
+                fontSize: '10px',
+                fontWeight: 800,
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: 'rgb(255, 255, 255)',
+                minWidth: '18px',
+                textAlign: 'center'
+              }}
+            >
+              {applicants.length}
+            </span>
+          </button>
+        </div>
         
-        {/* Status filters */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {statusFilters.map((status) => (
             <button
@@ -651,7 +861,6 @@ const StandbyApplicants = () => {
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))' }}>
         {applicants.length === 0 ? (
           <div className="col-span-full text-center py-12">
-           
             <p style={{ color: 'rgb(123, 130, 153)', marginTop: '12px', fontSize: '16px', fontWeight: 600 }}>No applicants found</p>
             <p style={{ color: 'rgb(160, 170, 191)', fontSize: '13px' }}>Try adjusting your filters or search query</p>
           </div>
@@ -679,7 +888,15 @@ const StandbyApplicants = () => {
                       className="flex items-center justify-center rounded-2xl shrink-0"
                       style={{ width: '48px', height: '48px', background: color, color: 'rgb(255, 255, 255)', fontSize: '15px', fontWeight: 800 }}
                     >
-                      {initials}
+                      {applicant.photoUrl ? (
+                        <img 
+                          src={`${API_URL}${applicant.photoUrl}`} 
+                          alt={applicant.fullName}
+                          style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        initials
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p style={{ fontSize: '14px', fontWeight: 800, color: 'rgb(13, 17, 23)', lineHeight: 1.2 }} className="truncate">{applicant.fullName}</p>
@@ -818,6 +1035,9 @@ const StandbyApplicants = () => {
           </div>
         </div>
       )}
+
+      {/* Photo Upload Dialog */}
+      <PhotoUploadDialog />
     </div>
   );
 };
