@@ -275,7 +275,9 @@ img.dom-care-cqc__external {
 a.trial-btn.switch-main:hover {
   animation: heartbeat 1s ease-in-out infinite;
 }
-
+.top15{
+    top:15% !important
+}
 @keyframes heartbeat {
   0%   { transform: scale(1); }
   14%  { transform: scale(1.15); }
