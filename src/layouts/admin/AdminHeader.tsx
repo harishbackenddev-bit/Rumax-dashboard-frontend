@@ -189,7 +189,7 @@ const AdminHeader = ({
         style={{ 
           height: '64px', 
           background: 'rgb(255, 255, 255)', 
-          boxShadow: 'rgb(238, 241, 251) 0px 1px 0px',
+          boxShadow: 'none',
           left: isSidebarOpen ? '232px' : '0px',
         }}
       >
