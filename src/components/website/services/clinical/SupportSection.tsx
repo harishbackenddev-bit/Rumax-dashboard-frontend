@@ -33,6 +33,7 @@ const SupportSection = ({
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    countryCode: '+27',
     contactNumber: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,7 +86,7 @@ const SupportSection = ({
       
       setTimeout(() => {
         setIsModalOpen(false);
-        setFormData({ fullName: '', email: '', contactNumber: '' });
+        setFormData({ fullName: '', email: '',countryCode: '+27', contactNumber: '' });
         setSubmitSuccess(false);
       }, 3000);
     }, 1500);
@@ -191,17 +192,44 @@ const SupportSection = ({
                 </div>
                 
                 <div className="form-group">
-                  <label>Contact Number <span className="required">*</span></label>
-                  <input
-                    type="tel"
-                    name="contactNumber"
-                    placeholder="Enter your phone number"
-                    value={formData.contactNumber}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                    className={errors.contactNumber ? 'error' : ''}
-                  />
-                  {errors.contactNumber && <span className="error-message">{errors.contactNumber}</span>}
+                  <label>
+                    Contact Number <span className="required">*</span>
+                  </label>
+
+                  <div className="phone-input">
+                    <select
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                    >
+                      <option value="+27">🇿🇦 +27</option>
+                      <option value="+1">🇺🇸 +1</option>
+                      <option value="+44">🇬🇧 +44</option>
+                      <option value="+91">🇮🇳 +91</option>
+                      <option value="+61">🇦🇺 +61</option>
+                      <option value="+971">🇦🇪 +971</option>
+                      <option value="+65">🇸🇬 +65</option>
+                      <option value="+81">🇯🇵 +81</option>
+                      <option value="+49">🇩🇪 +49</option>
+                      <option value="+33">🇫🇷 +33</option>
+                      <option value="+86">🇨🇳 +86</option>
+                    </select>
+
+                    <input
+                      type="tel"
+                      name="contactNumber"
+                      placeholder="Enter your phone number"
+                      value={formData.contactNumber}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                      className={errors.contactNumber ? 'error' : ''}
+                    />
+                  </div>
+
+                  {errors.contactNumber && (
+                    <span className="error-message">{errors.contactNumber}</span>
+                  )}
                 </div>
                 
                 <button 
