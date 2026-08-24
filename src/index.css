@@ -267,24 +267,7 @@
  font-size: var(--text-sm);
   line-height: var(--tw-leading, var(--text-sm--line-height));
 }
-.applyalljobs   h2 {
-        line-height: 20px;
-        font-size: 1.25rem;
-    }
-   .applyalljobs  .to-green-600 {
-    --tw-gradient-to: #12086f;
-  
-}
-.website .applyalljobs h1 {
-        font-size: 1.25rem;
-    }
-   .applyalljobs   .from-green-500 {
-    --tw-gradient-from: #12086f;
-   
-}
-.applyalljobs   .bg-\[\#22C55E\] {
-    background-color: #12086f;
-}
+
   .website p {
     line-height: 34px;
   }
@@ -385,7 +368,24 @@ section.Onboarding_main_Process.infrastructure .OnboardingProcess-cards {
 .bg-gray-50 {
   background-color: #f9fafb !important;
 }
-
+.applyalljobs   h2 {
+        line-height: 20px;
+        font-size: 1.25rem;
+    }
+   .applyalljobs  .to-green-600 {
+    --tw-gradient-to: #12086f;
+  
+}
+.website .applyalljobs h1 {
+        font-size: 1.25rem;
+    }
+   .applyalljobs   .from-green-500 {
+    --tw-gradient-from: #12086f;
+   
+}
+.applyalljobs   .bg-\[\#22C55E\] {
+    background-color: #12086f;
+}
 .bg-gray-100 {
   background-color: #f3f4f6 !important;
 }
