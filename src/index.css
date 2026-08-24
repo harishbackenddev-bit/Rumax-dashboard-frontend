@@ -393,7 +393,47 @@ section.Onboarding_main_Process.infrastructure .OnboardingProcess-cards {
 .bg-gray-200 {
   background-color: #e5e7eb !important;
 }
+.phone-input {
+    display: flex;
+}
 
+.phone-input select {
+    width: 90px;
+}
+.phone-input {
+  display: flex;
+  gap: 8px;
+}
+
+.phone-input select {
+  width: 100px;
+  flex-shrink: 0;
+  padding: 12px 8px;
+  border: 2px solid #ded9e6;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #181227;
+  background: #f7f7fa;
+  outline: none;
+  cursor: pointer;
+}
+
+.phone-input select:focus {
+  border-color: #601b80;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(96, 27, 128, 0.1);
+}
+
+.phone-input input {
+  flex: 1;
+  min-width: 0;
+}
+
+.phone-input select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .bg-\[\#f9fafb\] {
   background-color: #f9fafb !important;
 }
