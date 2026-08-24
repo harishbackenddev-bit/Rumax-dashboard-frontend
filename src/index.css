@@ -253,13 +253,7 @@
     font-size: 16px;
     font-weight: 500;
   }
-input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 1;
-  display: block;
-  cursor: pointer;
-  width: 20px;
-  height: 20px;
-}
+
 
   .website p,
   .website span,
@@ -823,7 +817,19 @@ select option {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+input[type="date"] {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+}
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+}
 /* ============================================
    TRANSITIONS
    ============================================ */
