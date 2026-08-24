@@ -275,6 +275,9 @@
     --tw-gradient-to: #12086f;
   
 }
+.website .applyalljobs h1 {
+        font-size: 1.25rem;
+    }
    .applyalljobs   .from-green-500 {
     --tw-gradient-from: #12086f;
    
