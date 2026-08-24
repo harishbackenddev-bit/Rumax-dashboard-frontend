@@ -260,7 +260,12 @@
     font-size: 18px;
     font-weight: 400;
   }
-
+.website .applyalljobs p,
+.website .applyalljobs span,
+.website .applyalljobs a {
+ font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+}
   .website p {
     line-height: 34px;
   }
