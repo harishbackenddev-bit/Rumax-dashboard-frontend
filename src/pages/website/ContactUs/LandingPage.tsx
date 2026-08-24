@@ -8,6 +8,7 @@ interface FormData {
   fullName: string;
   workEmail: string;
   companyName: string;
+  countryCode: string;
   phoneNumber: string;
   areasOfInterest: string[];
   // Step 2
@@ -48,6 +49,7 @@ const LandingPage: React.FC = () => {
     fullName: '',
     workEmail: '',
     companyName: '',
+    countryCode: '+27',
     phoneNumber: '',
     areasOfInterest: [],
     // Step 2
@@ -242,6 +244,7 @@ const LandingPage: React.FC = () => {
           fullName: '',
           workEmail: '',
           companyName: '',
+          countryCode: '',
           phoneNumber: '',
           areasOfInterest: [],
           studyPhase: '',
@@ -435,17 +438,44 @@ const LandingPage: React.FC = () => {
               {errors.companyName && <span className="error-text">{errors.companyName}</span>}
             </div>
             <div className="field">
-              <label>Phone Number <span className="required">*</span></label>
-              <input 
-                type="tel" 
-                name="phoneNumber"
-                placeholder="Enter Phone Number" 
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                disabled={loading}
-                className={errors.phoneNumber ? 'error' : ''}
-              />
-              {errors.phoneNumber && <span className="error-text">{errors.phoneNumber}</span>}
+              <label>
+                Phone Number <span className="required">*</span>
+              </label>
+
+              <div className="phone-input">
+                <select
+                  name="countryCode"
+                  value={formData.countryCode}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                >
+                  <option value="+27">🇿🇦 +27</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+44">🇬🇧 +44</option>
+                  <option value="+91">🇮🇳 +91</option>
+                  <option value="+61">🇦🇺 +61</option>
+                  <option value="+971">🇦🇪 +971</option>
+                  <option value="+65">🇸🇬 +65</option>
+                  <option value="+81">🇯🇵 +81</option>
+                  <option value="+49">🇩🇪 +49</option>
+                  <option value="+33">🇫🇷 +33</option>
+                  <option value="+86">🇨🇳 +86</option>
+                </select>
+
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  placeholder="Enter Phone Number"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                  className={errors.phoneNumber ? 'error' : ''}
+                />
+              </div>
+
+              {errors.phoneNumber && (
+                <span className="error-text">{errors.phoneNumber}</span>
+              )}
             </div>
           </div>
 
