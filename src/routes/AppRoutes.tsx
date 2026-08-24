@@ -51,7 +51,7 @@ import Settings from '@/pages/admin/Settings/Settings';
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/apply/:jobId" element={<ApplyJob />} />
+      
       {/* AUTH - Public */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
@@ -79,6 +79,7 @@ const AppRoutes = () => {
         <Route path="partners/investigator-sites" element={<Investigatorsites />} />
         <Route path="partners" element={<Partner />} />
         <Route path="careers/:id" element={<CareerDetail />} />
+        <Route path="/apply/:jobId" element={<ApplyJob />} />
       </Route>
 
 
