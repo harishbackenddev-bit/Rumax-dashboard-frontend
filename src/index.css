@@ -369,22 +369,22 @@ section.Onboarding_main_Process.infrastructure .OnboardingProcess-cards {
   background-color: #f9fafb !important;
 }
 .applyalljobs   h2 {
-        line-height: 20px;
-        font-size: 1.25rem;
+        line-height: 20px !important;
+        font-size: 1.25rem !important;
     }
    .applyalljobs  .to-green-600 {
-    --tw-gradient-to: #12086f;
+    --tw-gradient-to: #12086f !important;
   
 }
 .website .applyalljobs h1 {
-        font-size: 1.25rem;
+        font-size: 1.25rem !important; 
     }
    .applyalljobs   .from-green-500 {
-    --tw-gradient-from: #12086f;
+    --tw-gradient-from: #12086f !important;
    
 }
 .applyalljobs   .bg-\[\#22C55E\] {
-    background-color: #12086f;
+    background-color: #12086f !important;
 }
 .bg-gray-100 {
   background-color: #f3f4f6 !important;
