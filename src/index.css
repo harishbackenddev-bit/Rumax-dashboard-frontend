@@ -267,6 +267,21 @@
  font-size: var(--text-sm);
   line-height: var(--tw-leading, var(--text-sm--line-height));
 }
+.applyalljobs   h2 {
+        line-height: 20px;
+        font-size: 1.25rem;
+    }
+   .applyalljobs  .to-green-600 {
+    --tw-gradient-to: #12086f;
+  
+}
+   .applyalljobs   .from-green-500 {
+    --tw-gradient-from: #12086f;
+   
+}
+.applyalljobs   .bg-\[\#22C55E\] {
+    background-color: #12086f;
+}
   .website p {
     line-height: 34px;
   }
