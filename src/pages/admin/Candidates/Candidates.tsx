@@ -17,7 +17,10 @@ import {
   Clock,
   RefreshCw,
   Pen,
-  Trash2
+  Trash2,
+  Briefcase,
+  Filter,
+  FileText
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
@@ -26,66 +29,42 @@ import ProfileSidebar from '@/components/admin/candidate/ProfileSidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-interface Candidate {
+interface Application {
   _id: string;
-  id?: string;
+  applicationId: string;
+  candidateId: string;
+  jobId: string;
+  jobTitle: string;
+  jobDetails: any;
   firstName: string;
   lastName: string;
-  name: string;
+  fullName: string;
   email: string;
-  role: string;
-  positionAppliedFor?: string;
-  location: string;
-  preferredLocations?: string[];
-  availability: string;
-  workPreference?: string;
-  appliedDate: string;
-  applicationDate?: string;
-  score: number;
+  phone: string;
+  address: string;
+  city: string;
+  postcode: string;
+  nationality: string;
+  rightToWork: string;
   status: 'Pending' | 'In Review' | 'Interview Scheduled' | 'Offer Sent' | 'Hired' | 'Rejected' | 'Active';
-  initials: string;
-  color: string;
-  phone?: string;
-  nationality?: string;
-  rightToWork?: string | boolean;
-  address?: string;
-  addressLine1?: string;
-  addressLine2?: string;
-  city?: string;
-  county?: string;
-  country?: string;
-  postcode?: string;
-  dob?: string;
-  dateOfBirth?: string;
-  jobId?: string;
-  jobTitle?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  resumeUrl?: string;
-  coverLetterUrl?: string;
-  education?: any[];
-  experience?: any[];
-  training?: any[];
-  registrations?: any[];
-  references?: any[];
-  dbsValid?: boolean;
-  disciplinaryAction?: boolean;
-  unspentConvictions?: boolean;
-  documents?: string[];
-  drivingLicenceUrl?: string;
-  dbsCertificateUrl?: string;
-  referencesUrl?: string;
-  heardFrom?: string;
-  supportingStatement?: string;
-  scenarioAnswers?: any;
-  coreValues?: string[];
-  coverLetter?: string;
-  additionalNotes?: string;
-  availableFrom?: string;
-  expectedSalary?: string;
-  noticePeriod?: string;
-  fullName?: string;
-  fullAddress?: string;
+  score: number;
+  applicationDate: string;
+  coverLetter: string;
+  additionalNotes: string;
+  availableFrom: string;
+  expectedSalary: string;
+  noticePeriod: string;
+  interviewDate: string | null;
+  interviewNotes: string;
+  interviewers: any[];
+  offerDetails: any;
+  rejectionReason: string;
+  rejectionNotes: string;
+  jobSnapshot: any;
+  createdAt: string;
+  updatedAt: string;
+  initials?: string;
+  color?: string;
 }
 
 interface CandidateStats {
@@ -98,15 +77,64 @@ interface CandidateStats {
   rejected: number;
 }
 
+// Job filter dropdown component
+const JobFilterDropdown = ({ jobs, selectedJob, onJobSelect }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 rounded-xl h-10 bg-white border border-gray-200 text-sm text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors"
+      >
+        <Briefcase size={13} stroke="currentColor" strokeWidth={2} />
+        {selectedJob ? jobs.find((j: any) => j._id === selectedJob)?.jobTitle || 'All Jobs' : 'All Jobs'}
+        <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
+          <div
+            className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm"
+            onClick={() => {
+              onJobSelect('');
+              setIsOpen(false);
+            }}
+          >
+            All Jobs
+          </div>
+          {jobs.map((job: any) => (
+            <div
+              key={job._id}
+              className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm ${selectedJob === job._id ? 'bg-purple-50 text-purple-700' : ''}`}
+              onClick={() => {
+                onJobSelect(job._id);
+                setIsOpen(false);
+              }}
+            >
+              {job.jobTitle}
+              <span className="text-xs text-gray-400 ml-2">{job.location}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Candidates = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('All Candidates');
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [exporting, setExporting] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [sortBy, setSortBy] = useState('date');
+  const [selectedJobId, setSelectedJobId] = useState('');
+  const [jobs, setJobs] = useState<any[]>([]);
   const [stats, setStats] = useState<CandidateStats>({
     total: 0,
     active: 0,
@@ -151,58 +179,83 @@ const Candidates = () => {
     return { bg: 'rgb(254, 242, 242)', color: 'rgb(220, 38, 38)' };
   };
 
-  // Fetch candidates with their applications
-  const fetchCandidates = async () => {
+  // Fetch jobs for filter
+  const fetchJobs = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/admin/jobs`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setJobs(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    }
+  };
+
+  // Fetch applications
+  const fetchApplications = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
 
       if (!token) {
-        toast.error('Please login to view candidates');
+        toast.error('Please login to view applications');
         return;
       }
 
+      // Build query params
+      const params: any = {};
+      if (searchQuery) params.search = searchQuery;
+      if (selectedJobId) params.jobId = selectedJobId;
+      if (activeTab !== 'All Candidates') params.status = activeTab;
+
       const response = await axios.get(`${API_URL}/api/admin/candidates`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        params
       });
 
-      const formattedCandidates = response.data.data.map((candidate: any) => ({
-        ...candidate,
-        name: candidate.fullName || `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim(),
-        initials: candidate.initials || getInitials(candidate.firstName, candidate.lastName),
-        color: candidate.color || getColor(candidate.name || `${candidate.firstName} ${candidate.lastName}`),
-        id: candidate._id || candidate.id,
-        role: candidate.positionAppliedFor || candidate.role || 'N/A',
-        location: candidate.preferredLocations?.[0] || candidate.location || 'N/A',
-        availability: candidate.workPreference || candidate.availability || 'N/A',
-        appliedDate: candidate.appliedDate || candidate.createdAt || '',
-        status: candidate.status || 'Pending'
+      const formattedApplications = response.data.data.map((app: any) => ({
+        ...app,
+        initials: getInitials(app.firstName, app.lastName),
+        color: getColor(app.fullName || `${app.firstName} ${app.lastName}`),
+        fullName: app.fullName || `${app.firstName || ''} ${app.lastName || ''}`.trim()
       }));
 
-      setCandidates(formattedCandidates);
+      setApplications(formattedApplications);
 
       // Update stats
       const statsData = {
-        total: formattedCandidates.length,
-        active: formattedCandidates.filter((c: Candidate) => c.status === 'Active' || c.status === 'Pending').length,
-        inReview: formattedCandidates.filter((c: Candidate) => c.status === 'In Review').length,
-        interviewScheduled: formattedCandidates.filter((c: Candidate) => c.status === 'Interview Scheduled').length,
-        offerSent: formattedCandidates.filter((c: Candidate) => c.status === 'Offer Sent').length,
-        hired: formattedCandidates.filter((c: Candidate) => c.status === 'Hired').length,
-        rejected: formattedCandidates.filter((c: Candidate) => c.status === 'Rejected').length
+        total: formattedApplications.length,
+        active: formattedApplications.filter((c: Application) => c.status === 'Active' || c.status === 'Pending').length,
+        inReview: formattedApplications.filter((c: Application) => c.status === 'In Review').length,
+        interviewScheduled: formattedApplications.filter((c: Application) => c.status === 'Interview Scheduled').length,
+        offerSent: formattedApplications.filter((c: Application) => c.status === 'Offer Sent').length,
+        hired: formattedApplications.filter((c: Application) => c.status === 'Hired').length,
+        rejected: formattedApplications.filter((c: Application) => c.status === 'Rejected').length
       };
       setStats(statsData);
     } catch (error: any) {
-      console.error('Error fetching candidates:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch candidates');
+      console.error('Error fetching applications:', error);
+      toast.error(error.response?.data?.message || 'Failed to fetch applications');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCandidates();
+    fetchJobs();
+    fetchApplications();
   }, []);
+
+  // Re-fetch when filters change
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      fetchApplications();
+    }, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, activeTab, selectedJobId]);
 
   // Tabs configuration
   const tabs = [
@@ -216,55 +269,54 @@ const Candidates = () => {
   ];
 
   // Sort function
-  const sortCandidates = (candidatesToSort: Candidate[]) => {
-    const sorted = [...candidatesToSort];
+  const sortApplications = (appsToSort: Application[]) => {
+    const sorted = [...appsToSort];
     switch (sortBy) {
       case 'date':
         return sorted.sort((a, b) =>
-          new Date(b.appliedDate || b.createdAt || '').getTime() -
-          new Date(a.appliedDate || a.createdAt || '').getTime()
+          new Date(b.applicationDate || b.createdAt || '').getTime() -
+          new Date(a.applicationDate || a.createdAt || '').getTime()
         );
       case 'score':
         return sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
       case 'name':
-        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+        return sorted.sort((a, b) => a.fullName.localeCompare(b.fullName));
       default:
         return sorted;
     }
   };
 
-  // Filter and sort candidates
-  const filteredCandidates = sortCandidates(
-    candidates.filter(candidate => {
+  // Filter applications
+  const filteredApplications = sortApplications(
+    applications.filter(app => {
       const searchLower = searchQuery.toLowerCase();
-      const matchesSearch =
-        candidate.name?.toLowerCase().includes(searchLower) ||
-        candidate.email?.toLowerCase().includes(searchLower) ||
-        candidate.role?.toLowerCase().includes(searchLower) ||
-        candidate.positionAppliedFor?.toLowerCase().includes(searchLower);
-
-      if (activeTab === 'All Candidates') return matchesSearch;
-      return matchesSearch && candidate.status === activeTab;
+      return (
+        app.fullName?.toLowerCase().includes(searchLower) ||
+        app.email?.toLowerCase().includes(searchLower) ||
+        app.jobTitle?.toLowerCase().includes(searchLower) ||
+        app.firstName?.toLowerCase().includes(searchLower) ||
+        app.lastName?.toLowerCase().includes(searchLower)
+      );
     })
   );
 
   const getTabCount = (tabName: string) => {
-    if (tabName === 'All Candidates') return candidates.length;
+    if (tabName === 'All Candidates') return applications.length;
     if (tabName === 'Active') {
-      return candidates.filter(c => c.status === 'Active' || c.status === 'Pending').length;
+      return applications.filter(c => c.status === 'Active' || c.status === 'Pending').length;
     }
-    return candidates.filter(c => c.status === tabName).length;
+    return applications.filter(c => c.status === tabName).length;
   };
 
   // Handle view profile
-  const handleViewProfile = (candidate: Candidate) => {
-    setSelectedCandidate(candidate);
+  const handleViewProfile = (application: Application) => {
+    setSelectedApplication(application);
     setIsProfileOpen(true);
   };
 
   const handleCloseProfile = () => {
     setIsProfileOpen(false);
-    setSelectedCandidate(null);
+    setSelectedApplication(null);
   };
 
   // Handle export to Excel
@@ -272,36 +324,36 @@ const Candidates = () => {
     try {
       setExporting(true);
 
-      const dataToExport = filteredCandidates.map(candidate => ({
-        'Name': candidate.name,
-        'Email': candidate.email,
-        'Role': candidate.role,
-        'Location': candidate.location,
-        'Availability': candidate.availability,
-        'Applied Date': candidate.appliedDate ? new Date(candidate.appliedDate).toLocaleDateString() : 'N/A',
-        'Score': candidate.score || 0,
-        'Status': candidate.status
+      const dataToExport = filteredApplications.map(app => ({
+        'Candidate Name': app.fullName,
+        'Email': app.email,
+        'Phone': app.phone || 'N/A',
+        'Job Applied For': app.jobTitle,
+        'Location': app.city || 'N/A',
+        'Status': app.status,
+        'Score': app.score || 0,
+        'Application Date': app.applicationDate ? new Date(app.applicationDate).toLocaleDateString() : 'N/A'
       }));
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(dataToExport);
 
       const colWidths = [
-        { wch: 25 }, { wch: 30 }, { wch: 25 }, { wch: 20 },
-        { wch: 20 }, { wch: 18 }, { wch: 10 }, { wch: 25 }
+        { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 25 },
+        { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 18 }
       ];
       ws['!cols'] = colWidths;
 
-      XLSX.utils.book_append_sheet(wb, ws, 'Candidates');
+      XLSX.utils.book_append_sheet(wb, ws, 'Applications');
 
       const date = new Date();
       const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      XLSX.writeFile(wb, `candidates_export_${dateStr}.xlsx`);
+      XLSX.writeFile(wb, `applications_export_${dateStr}.xlsx`);
 
-      toast.success(`Exported ${dataToExport.length} candidates successfully`);
+      toast.success(`Exported ${dataToExport.length} applications successfully`);
     } catch (error) {
       console.error('Export failed:', error);
-      toast.error('Failed to export candidates. Please try again.');
+      toast.error('Failed to export applications. Please try again.');
     } finally {
       setExporting(false);
     }
@@ -309,12 +361,12 @@ const Candidates = () => {
 
   // Handle refresh
   const handleRefresh = async () => {
-    const toastId = toast.loading('Refreshing candidates...');
+    const toastId = toast.loading('Refreshing applications...');
     try {
-      await fetchCandidates();
-      toast.success('Candidates refreshed successfully', { id: toastId });
+      await fetchApplications();
+      toast.success('Applications refreshed successfully', { id: toastId });
     } catch (error) {
-      toast.error('Failed to refresh candidates', { id: toastId });
+      toast.error('Failed to refresh applications', { id: toastId });
     }
   };
 
@@ -329,12 +381,12 @@ const Candidates = () => {
     });
   };
 
-  if (loading) {
+  if (loading && applications.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading candidates...</p>
+          <p className="mt-4 text-gray-600">Loading applications...</p>
         </div>
       </div>
     );
@@ -347,34 +399,30 @@ const Candidates = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              All Candidates
+              Job Applications
             </h1>
             <p className="text-sm font-medium" style={{ color: 'rgb(160, 170, 191)' }}>
-              {candidates.length} candidates across all stages
+              {applications.length} total applications across all jobs
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {/* Search - Hidden on mobile, shown as icon */}
-            <div className="hidden sm:flex items-center gap-2 px-3.5 rounded-xl bg-white border border-gray-200 h-10 w-48 md:w-60 lg:w-72">
+            {/* Search */}
+            <div className="flex items-center gap-2 px-3.5 rounded-xl bg-white border border-gray-200 h-10 w-48 md:w-60 lg:w-72">
               <Search size={13} stroke="#A0AABF" strokeWidth={2.2} />
               <input
-                placeholder="Search candidates..."
+                placeholder="Search by name, email, job..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 border-none outline-none bg-transparent text-sm text-gray-700 font-medium placeholder:text-gray-400"
               />
             </div>
 
-            {/* Mobile Search */}
-            <div className="sm:hidden flex items-center gap-2 px-3 rounded-xl bg-white border border-gray-200 h-10 flex-1 min-w-[120px]">
-              <Search size={13} stroke="#A0AABF" strokeWidth={2.2} />
-              <input
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 border-none outline-none bg-transparent text-sm text-gray-700 font-medium placeholder:text-gray-400"
-              />
-            </div>
+            {/* Job Filter Dropdown */}
+            <JobFilterDropdown
+              jobs={jobs}
+              selectedJob={selectedJobId}
+              onJobSelect={setSelectedJobId}
+            />
 
             {/* Sort Dropdown */}
             <select
@@ -387,16 +435,10 @@ const Candidates = () => {
               <option value="name">Sort: Name</option>
             </select>
 
-            {/* Filters - Hidden on very small screens */}
-            <button className="hidden sm:flex items-center gap-2 px-4 rounded-xl h-10 bg-white border border-gray-200 text-sm text-gray-400 cursor-pointer hover:bg-gray-50 transition-colors">
-              <Funnel size={13} stroke="currentColor" strokeWidth={2} />
-              Filters
-            </button>
-
             {/* Refresh */}
             <button
               onClick={handleRefresh}
-              className="hidden sm:flex items-center gap-2 px-4 rounded-xl h-10 bg-white border border-gray-200 text-sm text-gray-400 cursor-pointer hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-4 rounded-xl h-10 bg-white border border-gray-200 text-sm text-gray-400 cursor-pointer hover:bg-gray-50 transition-colors"
             >
               <RefreshCw size={13} stroke="currentColor" strokeWidth={2} />
             </button>
@@ -405,7 +447,7 @@ const Candidates = () => {
             <button
               className="flex items-center gap-2 px-3 sm:px-4 rounded-xl h-10 bg-purple-700 text-white text-sm font-bold cursor-pointer border-none hover:bg-purple-800 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               onClick={handleExport}
-              disabled={exporting || filteredCandidates.length === 0}
+              disabled={exporting || filteredApplications.length === 0}
             >
               {exporting ? (
                 <>
@@ -422,7 +464,7 @@ const Candidates = () => {
           </div>
         </div>
 
-        {/* Tabs - Scrollable */}
+        {/* Tabs */}
         <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5" style={{ borderBottom: '1px solid rgb(238, 241, 251)' }}>
           {tabs.map((tab) => {
             const isActive = activeTab === tab.name;
@@ -464,22 +506,18 @@ const Candidates = () => {
           border: '1px solid rgb(228, 233, 244)',
           boxShadow: 'rgba(0, 0, 0, 0.04) 0px 1px 3px'
         }}>
-          {/* Scrollable Table View - Both Mobile & Desktop */}
           <div className="overflow-x-auto">
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '860px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '900px' }}>
               <thead>
                 <tr style={{ background: 'rgb(250, 251, 254)', borderBottom: '1px solid rgb(238, 241, 251)' }}>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'rgb(160, 170, 191)', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                     Candidate
                   </th>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'rgb(160, 170, 191)', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                    Role
+                    Applied For
                   </th>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'rgb(160, 170, 191)', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                     Location
-                  </th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'rgb(160, 170, 191)', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                    Availability
                   </th>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'rgb(160, 170, 191)', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                     Applied
@@ -496,65 +534,74 @@ const Candidates = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredCandidates.length === 0 ? (
+                {filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: '40px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '16px', fontWeight: 600, color: 'rgb(123, 130, 153)' }}>No candidates found</p>
+                    <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '16px', fontWeight: 600, color: 'rgb(123, 130, 153)' }}>No applications found</p>
                       <p style={{ fontSize: '13px', marginTop: '4px', color: 'rgb(160, 170, 191)' }}>Try adjusting your search or filters</p>
                     </td>
                   </tr>
                 ) : (
-                  filteredCandidates.map((candidate, index) => {
-                    const statusStyle = getStatusStyle(candidate.status);
-                    const scoreStyle = getScoreStyle(candidate.score || 0);
+                  filteredApplications.map((app, index) => {
+                    const statusStyle = getStatusStyle(app.status);
+                    const scoreStyle = getScoreStyle(app.score || 0);
                     return (
                       <tr
-                        key={candidate._id || candidate.id}
+                        key={app._id || app.applicationId}
                         style={{
-                          borderBottom: index === filteredCandidates.length - 1 ? 'none' : '1px solid rgb(238, 241, 251)',
+                          borderBottom: index === filteredApplications.length - 1 ? 'none' : '1px solid rgb(238, 241, 251)',
                           background: 'rgb(255, 255, 255)',
                           transition: 'background 0.12s',
                           cursor: 'pointer'
                         }}
                         className="hover:bg-gray-50"
-                        onClick={() => handleViewProfile(candidate)}
+                        onClick={() => handleViewProfile(app)}
                       >
                         <td style={{ padding: '13px 16px' }}>
                           <div className="flex items-center gap-3">
                             <div
                               className="flex items-center justify-center rounded-xl shrink-0"
-                              style={{ width: '34px', height: '34px', background: candidate.color || getColor(candidate.name), boxShadow: 'rgba(0, 0, 0, 0.15) 0px 2px 8px' }}
+                              style={{ width: '34px', height: '34px', background: app.color || getColor(app.fullName), boxShadow: 'rgba(0, 0, 0, 0.15) 0px 2px 8px' }}
                             >
                               <span style={{ color: '#fff', fontSize: '11px', fontWeight: 800 }}>
-                                {candidate.initials || getInitials(candidate.firstName, candidate.lastName)}
+                                {app.initials || getInitials(app.firstName, app.lastName)}
                               </span>
                             </div>
                             <div>
                               <span style={{ fontWeight: 700, color: 'rgb(13, 17, 23)' }}>
-                                {candidate.name}
+                                {app.fullName}
                               </span>
                               <div style={{ fontSize: '11px', color: 'rgb(160, 170, 191)', fontWeight: 500 }}>
-                                {candidate.email}
+                                {app.email}
                               </div>
+                              {app.phone && (
+                                <div style={{ fontSize: '10px', color: 'rgb(160, 170, 191)' }}>
+                                  📞 {app.phone}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
-                        <td style={{ padding: '13px 16px', color: 'rgb(123, 130, 153)', fontWeight: 500 }}>
-                          {candidate.role || candidate.positionAppliedFor || 'N/A'}
+                        <td style={{ padding: '13px 16px' }}>
+                          <div>
+                            <span style={{ fontWeight: 600, color: 'rgb(13, 17, 23)' }}>
+                              {app.jobTitle}
+                            </span>
+                            <div style={{ fontSize: '10px', color: 'rgb(160, 170, 191)' }}>
+                              Application ID: {app._id?.substring(0, 8) || app.applicationId?.substring(0, 8)}
+                            </div>
+                          </div>
                         </td>
                         <td style={{ padding: '13px 16px' }}>
                           <span className="flex items-center gap-1.5" style={{ color: 'rgb(123, 130, 153)', fontWeight: 500 }}>
                             <MapPin size={12} stroke="#A0AABF" strokeWidth={2} />
-                            {candidate.location || candidate.preferredLocations?.[0] || 'N/A'}
+                            {app.city || 'N/A'}
                           </span>
-                        </td>
-                        <td style={{ padding: '13px 16px', color: 'rgb(123, 130, 153)', fontWeight: 500 }}>
-                          {candidate.availability || candidate.workPreference || 'N/A'}
                         </td>
                         <td style={{ padding: '13px 16px' }}>
                           <span className="flex items-center gap-1.5" style={{ color: 'rgb(160, 170, 191)', fontSize: '12px', fontWeight: 500 }}>
                             <Calendar size={12} stroke="#A0AABF" strokeWidth={2} />
-                            {formatDate(candidate.appliedDate || candidate.createdAt || '')}
+                            {formatDate(app.applicationDate || app.createdAt || '')}
                           </span>
                         </td>
                         <td style={{ padding: '13px 16px' }}>
@@ -564,7 +611,7 @@ const Candidates = () => {
                             background: scoreStyle.bg,
                             color: scoreStyle.color
                           }}>
-                            {candidate.score || 0}
+                            {app.score || 0}
                           </span>
                         </td>
                         <td style={{ padding: '13px 16px' }}>
@@ -575,39 +622,21 @@ const Candidates = () => {
                             color: statusStyle.color
                           }}>
                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusStyle.dot, display: 'inline-block' }} />
-                            {candidate.status}
+                            {app.status}
                           </span>
                         </td>
                         <td style={{ padding: '13px 16px' }}>
-                          <div className="flex gap-1.5">
-                            <button
-                              className="flex items-center justify-center rounded-xl"
-                              title="View"
-                              style={{ width: '30px', height: '30px', background: 'rgb(238, 241, 251)', color: 'rgb(96, 27, 128)', cursor: 'pointer', border: 'none' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewProfile(candidate);
-                              }}
-                            >
-                              <Eye size={13} stroke="currentColor" strokeWidth={2} />
-                            </button>
-                            {/* <button
-                              className="flex items-center justify-center rounded-xl"
-                              title="Edit"
-                              style={{ width: '30px', height: '30px', background: 'rgb(245, 243, 255)', color: 'rgb(124, 58, 237)', cursor: 'pointer', border: 'none' }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Pen size={13} stroke="currentColor" strokeWidth={2} />
-                            </button>
-                            <button
-                              className="flex items-center justify-center rounded-xl"
-                              title="Delete"
-                              style={{ width: '30px', height: '30px', background: 'rgb(254, 242, 242)', color: 'rgb(220, 38, 38)', cursor: 'pointer', border: 'none' }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Trash2 size={13} stroke="currentColor" strokeWidth={2} />
-                            </button> */}
-                          </div>
+                          <button
+                            className="flex items-center justify-center rounded-xl"
+                            title="View Application"
+                            style={{ width: '30px', height: '30px', background: 'rgb(238, 241, 251)', color: 'rgb(96, 27, 128)', cursor: 'pointer', border: 'none' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewProfile(app);
+                            }}
+                          >
+                            <Eye size={13} stroke="currentColor" strokeWidth={2} />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -618,10 +647,13 @@ const Candidates = () => {
           </div>
 
           {/* Footer */}
-          {filteredCandidates.length > 0 && (
+          {filteredApplications.length > 0 && (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-3 border-t" style={{ borderColor: 'rgb(238, 241, 251)' }}>
               <p className="text-xs" style={{ color: 'rgb(160, 170, 191)', fontWeight: 500 }}>
-                Showing <b style={{ color: 'rgb(13, 17, 23)' }}>{filteredCandidates.length}</b> of <b style={{ color: 'rgb(13, 17, 23)' }}>{candidates.length}</b> candidates
+                Showing <b style={{ color: 'rgb(13, 17, 23)' }}>{filteredApplications.length}</b> of <b style={{ color: 'rgb(13, 17, 23)' }}>{applications.length}</b> applications
+                {selectedJobId && jobs.find(j => j._id === selectedJobId) && (
+                  <span> for <b>{jobs.find(j => j._id === selectedJobId)?.jobTitle}</b></span>
+                )}
               </p>
               <div className="flex gap-2">
                 <button disabled className="rounded-xl px-4 py-1.5 border text-xs font-semibold bg-white cursor-default" style={{ borderColor: 'rgb(228, 233, 244)', color: 'rgb(200, 206, 221)' }}>
@@ -638,7 +670,7 @@ const Candidates = () => {
 
       {/* Profile Sidebar */}
       <ProfileSidebar
-        candidate={selectedCandidate}
+        application={selectedApplication}
         isOpen={isProfileOpen}
         onClose={handleCloseProfile}
       />

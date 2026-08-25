@@ -14,21 +14,15 @@ import {
   ArrowRight,
   CircleCheckBig,
   Briefcase,
-  Award,
   Shield,
-  FileCheck,
   CalendarDays,
   User,
   Clock,
   CheckCircle,
   Calendar,
   Loader2,
-  Download,
-  ExternalLink,
   Star,
-  TrendingUp,
   Users,
-  Building,
   Send,
   AlertCircle,
   GraduationCap,
@@ -38,8 +32,7 @@ import {
   Car,
   CalendarPlus,
   FileWarning,
-  UserX,
-  Video
+  UserX
 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -55,30 +48,15 @@ interface Document {
   size?: string;
 }
 
-interface Application {
-  _id: string;
-  jobId: string;
-  jobTitle: string;
-  coverLetterText: string;
-  additionalNotes?: string;
-  availableFrom: string;
-  expectedSalary: string;
-  noticePeriod?: string;
-  referencesText?: string;
-  status: string;
-  appliedDate: string;
-  createdAt: string;
-}
-
 interface ProfileSidebarProps {
-  candidate: any;
+  application: any;
   isOpen: boolean;
   onClose: () => void;
   onStatusUpdate?: () => void;
 }
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ 
-  candidate, 
+  application, 
   isOpen, 
   onClose,
   onStatusUpdate 
@@ -86,7 +64,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [activeTab, setActiveTab] = useState('Personal Info');
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [applications, setApplications] = useState<Application[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
@@ -99,20 +76,16 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [standbyReason, setStandbyReason] = useState('');
   const [messageSending, setMessageSending] = useState(false);
   
-  // Interview form state
   const [interviewData, setInterviewData] = useState({
     interviewDate: '',
     interviewTime: '',
     interviewer: '',
     format: 'Video Call (Teams)',
-    status:'Interview Scheduled'
+    status: 'Interview Scheduled'
   });
   
-  // Document request state
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [documentNote, setDocumentNote] = useState('');
-  
-  // Rejection state
   const [rejectionReason, setRejectionReason] = useState('');
   const [rejectionNotes, setRejectionNotes] = useState('');
   
@@ -145,16 +118,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   const interviewerOptions = ['Sophie Laurent', 'Raj Mehta', 'Claire Foster', 'Emma Walsh', 'Daniel Ross'];
   const interviewFormats = ['Video Call (Teams)', 'In-Person', 'Phone Call'];
+  const statusOptions = ['Pending', 'Active', 'In Review', 'Interview Scheduled', 'Offer Sent', 'Hired', 'Rejected'];
 
-  // Toggle section expansion
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  // Profile tabs
   const profileTabs = [
     'Personal Info',
     'Role & Availability',
@@ -164,153 +129,150 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     'Timeline'
   ];
 
-  // Fetch applications and documents when candidate changes
-  useEffect(() => {
-    if (candidate && isOpen) {
-      fetchCandidateData();
-    }
-  }, [candidate, isOpen]);
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
-  const fetchCandidateData = async () => {
-    if (!candidate) return;
+  // Build documents from application data
+  useEffect(() => {
+    if (application && isOpen) {
+      buildDocuments();
+    }
+  }, [application, isOpen]);
+
+  const buildDocuments = () => {
+    const docs: Document[] = [];
+    
+    const getFileName = (url: string) => {
+      if (!url) return 'Document';
+      const parts = url.split('/');
+      return parts[parts.length - 1] || 'Document';
+    };
+
+    const getFileType = (url: string): 'pdf' | 'doc' | 'docx' | 'jpg' | 'png' => {
+      if (!url) return 'pdf';
+      const ext = url.split('.').pop()?.toLowerCase() || 'pdf';
+      if (['pdf', 'doc', 'docx', 'jpg', 'png'].includes(ext)) {
+        return ext as 'pdf' | 'doc' | 'docx' | 'jpg' | 'png';
+      }
+      return 'pdf';
+    };
+
+    const formatDate = (date: string) => {
+      if (!date) return 'N/A';
+      return new Date(date).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    };
+
+    if (application.resumeUrl) {
+      docs.push({
+        id: 'resume',
+        name: `Resume - ${getFileName(application.resumeUrl)}`,
+        uploaded: formatDate(application.applicationDate || application.createdAt),
+        type: getFileType(application.resumeUrl),
+        url: application.resumeUrl
+      });
+    }
+
+    if (application.coverLetterUrl) {
+      docs.push({
+        id: 'cover-letter',
+        name: `Cover Letter - ${getFileName(application.coverLetterUrl)}`,
+        uploaded: formatDate(application.applicationDate || application.createdAt),
+        type: getFileType(application.coverLetterUrl),
+        url: application.coverLetterUrl
+      });
+    }
+
+    if (application.drivingLicenceUrl) {
+      docs.push({
+        id: 'driving-licence',
+        name: `Driving Licence - ${getFileName(application.drivingLicenceUrl)}`,
+        uploaded: formatDate(application.applicationDate || application.createdAt),
+        type: getFileType(application.drivingLicenceUrl),
+        url: application.drivingLicenceUrl
+      });
+    }
+
+    if (application.dbsCertificateUrl) {
+      docs.push({
+        id: 'dbs-certificate',
+        name: `DBS Certificate - ${getFileName(application.dbsCertificateUrl)}`,
+        uploaded: formatDate(application.applicationDate || application.createdAt),
+        type: getFileType(application.dbsCertificateUrl),
+        url: application.dbsCertificateUrl
+      });
+    }
+
+    if (application.referencesUrl) {
+      docs.push({
+        id: 'references',
+        name: `References - ${getFileName(application.referencesUrl)}`,
+        uploaded: formatDate(application.applicationDate || application.createdAt),
+        type: getFileType(application.referencesUrl),
+        url: application.referencesUrl
+      });
+    }
+
+    if (application.training && Array.isArray(application.training)) {
+      application.training.forEach((training: any, index: number) => {
+        if (training.certificate) {
+          docs.push({
+            id: `training-${index}`,
+            name: `Training Certificate - ${training.name || `Training ${index + 1}`}`,
+            uploaded: training.dateCompleted ? formatDate(training.dateCompleted) : formatDate(application.applicationDate || application.createdAt),
+            type: getFileType(training.certificate),
+            url: training.certificate
+          });
+        }
+      });
+    }
+
+    if (application.documents && Array.isArray(application.documents)) {
+      application.documents.forEach((docUrl: string, index: number) => {
+        if (docUrl) {
+          docs.push({
+            id: `doc-${index}`,
+            name: `Document ${index + 1} - ${getFileName(docUrl)}`,
+            uploaded: formatDate(application.applicationDate || application.createdAt),
+            type: getFileType(docUrl),
+            url: docUrl
+          });
+        }
+      });
+    }
+
+    setDocuments(docs);
+  };
+
+  // Fetch updated application data
+  const fetchApplicationData = async () => {
+    if (!application) return;
     
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
-      
-      if (!token) {
-        toast.error('Please login to view candidate data');
-        return;
-      }
-
-      // Fetch applications for this candidate
-      const appsResponse = await axios.get(
-        `${API_URL}/api/admin/candidate/${candidate._id}`,
+      const response = await axios.get(
+        `${API_URL}/api/admin/candidate/${application._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (appsResponse.data.success) {
-        setApplications(appsResponse.data.data || []);
+      if (response.data.success) {
+        Object.assign(application, response.data.data);
+        buildDocuments();
       }
-
-      // Build documents from candidate data
-      const docs: Document[] = [];
-      
-      const getFileName = (url: string) => {
-        if (!url) return 'Document';
-        const parts = url.split('/');
-        return parts[parts.length - 1] || 'Document';
-      };
-
-      const getFileType = (url: string): 'pdf' | 'doc' | 'docx' | 'jpg' | 'png' => {
-        if (!url) return 'pdf';
-        const ext = url.split('.').pop()?.toLowerCase() || 'pdf';
-        if (['pdf', 'doc', 'docx', 'jpg', 'png'].includes(ext)) {
-          return ext as 'pdf' | 'doc' | 'docx' | 'jpg' | 'png';
-        }
-        return 'pdf';
-      };
-
-      const formatDate = (date: string) => {
-        if (!date) return 'N/A';
-        return new Date(date).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric'
-        });
-      };
-
-      if (candidate.resumeUrl) {
-        docs.push({
-          id: 'resume',
-          name: `Resume - ${getFileName(candidate.resumeUrl)}`,
-          uploaded: formatDate(candidate.createdAt || candidate.appliedDate),
-          type: getFileType(candidate.resumeUrl),
-          url: candidate.resumeUrl
-        });
-      }
-
-      if (candidate.coverLetterUrl) {
-        docs.push({
-          id: 'cover-letter',
-          name: `Cover Letter - ${getFileName(candidate.coverLetterUrl)}`,
-          uploaded: formatDate(candidate.createdAt || candidate.appliedDate),
-          type: getFileType(candidate.coverLetterUrl),
-          url: candidate.coverLetterUrl
-        });
-      }
-
-      if (candidate.documents && Array.isArray(candidate.documents)) {
-        candidate.documents.forEach((docUrl: string, index: number) => {
-          if (docUrl) {
-            docs.push({
-              id: `doc-${index}`,
-              name: `Document ${index + 1} - ${getFileName(docUrl)}`,
-              uploaded: formatDate(candidate.createdAt || candidate.appliedDate),
-              type: getFileType(docUrl),
-              url: docUrl
-            });
-          }
-        });
-      }
-
-      if (candidate.drivingLicenceUrl) {
-        docs.push({
-          id: 'driving-licence',
-          name: `Driving Licence - ${getFileName(candidate.drivingLicenceUrl)}`,
-          uploaded: formatDate(candidate.createdAt || candidate.appliedDate),
-          type: getFileType(candidate.drivingLicenceUrl),
-          url: candidate.drivingLicenceUrl
-        });
-      }
-
-      if (candidate.dbsCertificateUrl) {
-        docs.push({
-          id: 'dbs-certificate',
-          name: `DBS Certificate - ${getFileName(candidate.dbsCertificateUrl)}`,
-          uploaded: formatDate(candidate.createdAt || candidate.appliedDate),
-          type: getFileType(candidate.dbsCertificateUrl),
-          url: candidate.dbsCertificateUrl
-        });
-      }
-
-      if (candidate.referencesUrl) {
-        docs.push({
-          id: 'references',
-          name: `References - ${getFileName(candidate.referencesUrl)}`,
-          uploaded: formatDate(candidate.createdAt || candidate.appliedDate),
-          type: getFileType(candidate.referencesUrl),
-          url: candidate.referencesUrl
-        });
-      }
-
-      if (candidate.training && Array.isArray(candidate.training)) {
-        candidate.training.forEach((training: any, index: number) => {
-          if (training.certificate) {
-            docs.push({
-              id: `training-${index}`,
-              name: `Training Certificate - ${training.name || `Training ${index + 1}`}`,
-              uploaded: training.dateCompleted ? formatDate(training.dateCompleted) : formatDate(candidate.createdAt || candidate.appliedDate),
-              type: getFileType(training.certificate),
-              url: training.certificate
-            });
-          }
-        });
-      }
-
-      setDocuments(docs);
-
-    } catch (error: any) {
-      console.error('Error fetching candidate data:', error);
-      toast.error(error.response?.data?.message || 'Failed to load candidate data');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching application data:', error);
     }
   };
 
-  // Update candidate status
-  const updateCandidateStatus = async (status: string) => {
-    if (!candidate) return;
+  // Update application status
+  const updateApplicationStatus = async (status: string) => {
+    if (!application) return;
     
     try {
       setUpdating(true);
@@ -322,7 +284,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       }
 
       const response = await axios.patch(
-        `${API_URL}/api/admin/candidate/${candidate._id}/status`,
+        `${API_URL}/api/admin/candidate/${application._id}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -331,7 +293,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         toast.success(`Status updated to "${status}"`);
         setShowStatusModal(false);
         onStatusUpdate?.();
-        await fetchCandidateData();
+        await fetchApplicationData();
       }
     } catch (error: any) {
       console.error('Error updating status:', error);
@@ -341,7 +303,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     }
   };
 
-  // Send message to candidate
+  // Send message
   const sendMessage = async () => {
     if (!messageText.trim()) {
       toast.error('Please enter a message');
@@ -358,10 +320,11 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       }
 
       const response = await axios.post(
-        `${API_URL}/api/admin/candidates/message`,
+        `${API_URL}/api/admin/candidate/message`,
         { 
+          applicationId: application._id,
           message: messageText,
-          subject: `Message regarding your application`
+          subject: `Message regarding your application for ${application.jobTitle || 'position'}`
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -396,7 +359,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       }
 
       const response = await axios.patch(
-           `${API_URL}/api/admin/candidate/${candidate._id}/status`,
+        `${API_URL}/api/admin/candidate/${application._id}/status`,
         { 
           status: 'Standby',
           notes: standbyReason
@@ -405,11 +368,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       );
 
       if (response.data.success) {
-        toast.success(`Candidate moved to standby`);
+        toast.success(`Application moved to standby`);
+         window.location.reload();
         setShowStandbyModal(false);
         setStandbyReason('');
         onStatusUpdate?.();
-        await fetchCandidateData();
+        await fetchApplicationData();
       }
     } catch (error: any) {
       console.error('Error moving to standby:', error);
@@ -436,7 +400,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       }
 
       const response = await axios.patch(
-        `${API_URL}/api/admin/candidate/${candidate._id}/status`,
+        `${API_URL}/api/admin/candidate/${application._id}/status`,
         {
           ...interviewData,
           candidateName: fullName
@@ -447,9 +411,15 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       if (response.data.success) {
         toast.success('Interview scheduled successfully!');
         setShowInterviewModal(false);
-        setInterviewData({ interviewDate: '', interviewTime: '', interviewer: '', format: 'Video Call (Teams)', status: 'Interview Scheduled' });
+        setInterviewData({ 
+          interviewDate: '', 
+          interviewTime: '', 
+          interviewer: '', 
+          format: 'Video Call (Teams)',
+          status: 'Interview Scheduled' 
+        });
         onStatusUpdate?.();
-        await fetchCandidateData();
+        await fetchApplicationData();
       }
     } catch (error: any) {
       console.error('Error scheduling interview:', error);
@@ -476,9 +446,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       }
 
       const response = await axios.patch(
-        `${API_URL}/api/admin/candidate/${candidate._id}/status`,
+        `${API_URL}/api/admin/candidate/${application._id}/status`,
         {
-          candidateId: candidate._id,
           documents: selectedDocuments,
           note: documentNote,
           candidateName: fullName,
@@ -493,7 +462,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         setSelectedDocuments([]);
         setDocumentNote('');
         onStatusUpdate?.();
-        await fetchCandidateData();
+        await fetchApplicationData();
       }
     } catch (error: any) {
       console.error('Error sending document request:', error);
@@ -520,7 +489,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       }
 
       const response = await axios.patch(
-        `${API_URL}/api/admin/candidate/${candidate._id}/status`,
+        `${API_URL}/api/admin/candidate/${application._id}/status`,
         {
           status: 'Rejected',
           rejectionReason,
@@ -530,22 +499,21 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       );
 
       if (response.data.success) {
-        toast.success('Candidate rejected successfully');
+        toast.success('Application rejected successfully');
         setShowRejectModal(false);
         setRejectionReason('');
         setRejectionNotes('');
         onStatusUpdate?.();
-        await fetchCandidateData();
+        await fetchApplicationData();
       }
     } catch (error: any) {
-      console.error('Error rejecting candidate:', error);
-      toast.error(error.response?.data?.message || 'Failed to reject candidate');
+      console.error('Error rejecting application:', error);
+      toast.error(error.response?.data?.message || 'Failed to reject application');
     } finally {
       setUpdating(false);
     }
   };
 
-  // Toggle document selection
   const toggleDocument = (doc: string) => {
     setSelectedDocuments(prev =>
       prev.includes(doc)
@@ -554,12 +522,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     );
   };
 
-  // Toggle rejection reason
-  const selectRejectionReason = (reason: string) => {
-    setRejectionReason(reason);
-  };
-
-  // Get status style
   const getStatusStyle = (status: string) => {
     const styles: Record<string, { bg: string; color: string; dot: string }> = {
       'Active': { bg: 'rgb(239, 246, 255)', color: 'rgb(37, 99, 235)', dot: 'rgb(37, 99, 235)' },
@@ -571,23 +533,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       'Rejected': { bg: 'rgb(254, 242, 242)', color: 'rgb(220, 38, 38)', dot: 'rgb(220, 38, 38)' },
       'Standby': { bg: 'rgb(255, 251, 235)', color: 'rgb(180, 83, 9)', dot: 'rgb(180, 83, 9)' }
     };
-    return styles[status] || styles['Active'];
-  };
-
-  // Get application status style
-  const getAppStatusStyle = (status: string) => {
-    const styles: Record<string, { bg: string; color: string }> = {
-      'Pending': { bg: 'rgb(243, 244, 246)', color: 'rgb(107, 114, 128)' },
-      'In Review': { bg: 'rgb(255, 251, 235)', color: 'rgb(202, 138, 4)' },
-      'Interview Scheduled': { bg: 'rgb(245, 243, 255)', color: 'rgb(124, 58, 237)' },
-      'Offer Sent': { bg: 'rgb(255, 247, 237)', color: 'rgb(234, 88, 12)' },
-      'Hired': { bg: 'rgb(240, 253, 244)', color: 'rgb(22, 163, 74)' },
-      'Rejected': { bg: 'rgb(254, 242, 242)', color: 'rgb(220, 38, 38)' }
-    };
     return styles[status] || styles['Pending'];
   };
 
-  // Get initials
   const getInitials = (firstName: string, lastName: string) => {
     if (!firstName && !lastName) return '??';
     const first = firstName?.charAt(0) || '';
@@ -595,7 +543,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     return (first + last).toUpperCase() || '??';
   };
 
-  // Get color
   const getColor = (name: string) => {
     const colors = ['#0F4C81', '#27B3C9', '#7C3AED', '#059669', '#D97706', '#DC2626', '#2563EB', '#0891B2'];
     if (!name) return colors[0];
@@ -603,36 +550,24 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     return colors[index];
   };
 
-  // Get file icon based on type
   const getFileIcon = (type: string) => {
-    switch(type) {
-      case 'pdf': return <FileText size={14} stroke="#0F4C81" strokeWidth={2} />;
-      case 'doc': 
-      case 'docx': return <FileText size={14} stroke="#0F4C81" strokeWidth={2} />;
-      case 'jpg': 
-      case 'png': return <FileText size={14} stroke="#0F4C81" strokeWidth={2} />;
-      default: return <FileText size={14} stroke="#0F4C81" strokeWidth={2} />;
-    }
+    return <FileText size={14} stroke="#0F4C81" strokeWidth={2} />;
   };
 
-  if (!candidate || !isOpen) return null;
+  if (!application || !isOpen) return null;
 
-  const statusStyle = getStatusStyle(candidate.status);
-  const fullName = candidate.fullName || `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || 'Candidate';
-  const firstName = candidate.firstName || '';
-  const lastName = candidate.lastName || '';
-  const initials = candidate.initials || getInitials(firstName, lastName);
-  const color = candidate.color || getColor(fullName);
-  const role = candidate.positionAppliedFor || candidate.role || 'N/A';
-  const location = candidate.preferredLocations?.[0] || candidate.location || 'N/A';
-  const availability = candidate.workPreference || candidate.availability || 'N/A';
-  const email = candidate.email || 'N/A';
-  const phone = candidate.phone || 'N/A';
-  const statusOptions = ['Active', 'In Review', 'Interview Scheduled', 'Offer Sent', 'Hired', 'Rejected'];
+  const statusStyle = getStatusStyle(application.status);
+  const fullName = application.fullName || `${application.firstName || ''} ${application.lastName || ''}`.trim() || 'Candidate';
+  const firstName = application.firstName || '';
+  const lastName = application.lastName || '';
+  const initials = application.initials || getInitials(firstName, lastName);
+  const color = application.color || getColor(fullName);
+  const role = application.jobTitle || application.positionAppliedFor || 'N/A';
+  const location = application.city || application.preferredLocations?.[0] || 'N/A';
+  const email = application.email || 'N/A';
+  const phone = application.phone || 'N/A';
 
-  // --- Modals ---
-
-  // 1. Status Modal
+  // Modals
   const StatusModal = () => (
     <div className="fixed inset-0 flex items-center justify-center z-[70]" style={{ background: 'rgba(13, 17, 23, 0.5)', backdropFilter: 'blur(4px)' }}>
       <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: 'rgb(255, 255, 255)', boxShadow: 'rgba(0, 0, 0, 0.2) 0px 20px 60px' }}>
@@ -682,7 +617,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => selectedStatus && updateCandidateStatus(selectedStatus)}
+            onClick={() => selectedStatus && updateApplicationStatus(selectedStatus)}
             disabled={!selectedStatus || updating}
             className="flex-1 py-2.5 rounded-xl"
             style={{
@@ -691,8 +626,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               fontSize: '13px',
               fontWeight: 700,
               cursor: !selectedStatus || updating ? 'not-allowed' : 'pointer',
-              border: 'none',
-              boxShadow: 'none'
+              border: 'none'
             }}
           >
             {updating ? 'Updating...' : 'Update Status'}
@@ -702,7 +636,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
   );
 
-  // 2. Message Modal
   const MessageModal = () => (
     <div className="fixed inset-0 flex items-center justify-center z-[70]" style={{ background: 'rgba(13, 17, 23, 0.5)', backdropFilter: 'blur(4px)' }}>
       <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: 'rgb(255, 255, 255)', boxShadow: 'rgba(0, 0, 0, 0.2) 0px 20px 60px' }}>
@@ -750,8 +683,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               fontSize: '13px',
               fontWeight: 700,
               cursor: !messageText.trim() || messageSending ? 'not-allowed' : 'pointer',
-              border: 'none',
-              boxShadow: 'none'
+              border: 'none'
             }}
           >
             {messageSending ? 'Sending...' : 'Send Message'}
@@ -761,7 +693,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
   );
 
-  // 3. Standby Modal
   const StandbyModal = () => (
     <div className="fixed inset-0 flex items-center justify-center z-[70]" style={{ background: 'rgba(13, 17, 23, 0.5)', backdropFilter: 'blur(4px)' }}>
       <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: 'rgb(255, 255, 255)', boxShadow: 'rgba(0, 0, 0, 0.2) 0px 20px 60px' }}>
@@ -813,8 +744,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               fontSize: '13px',
               fontWeight: 700,
               cursor: !standbyReason.trim() || updating ? 'not-allowed' : 'pointer',
-              border: 'none',
-              boxShadow: 'none'
+              border: 'none'
             }}
           >
             {updating ? 'Moving...' : 'Move to Standby'}
@@ -824,7 +754,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
   );
 
-  // 4. Schedule Interview Modal
   const InterviewModal = () => (
     <div className="fixed inset-0 flex items-center justify-center z-[70]" style={{ background: 'rgba(13, 17, 23, 0.5)', backdropFilter: 'blur(4px)' }}>
       <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: 'rgb(255, 255, 255)', boxShadow: 'rgba(0, 0, 0, 0.2) 0px 20px 60px' }}>
@@ -913,7 +842,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             onClick={handleScheduleInterview}
             disabled={updating}
             className="flex-1 py-2.5 rounded-xl"
-            style={{ background: updating ? 'rgb(228, 233, 244)' : 'rgb(5, 150, 105)', color: updating ? 'rgb(160, 170, 191)' : 'rgb(255, 255, 255)', fontSize: '13px', fontWeight: 700, cursor: updating ? 'not-allowed' : 'pointer', border: 'none', boxShadow: 'none' }}
+            style={{ background: updating ? 'rgb(228, 233, 244)' : 'rgb(5, 150, 105)', color: updating ? 'rgb(160, 170, 191)' : 'rgb(255, 255, 255)', fontSize: '13px', fontWeight: 700, cursor: updating ? 'not-allowed' : 'pointer', border: 'none' }}
           >
             {updating ? 'Scheduling...' : 'Confirm & Schedule'}
           </button>
@@ -922,7 +851,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
   );
 
-  // 5. Request Documents Modal
   const RequestDocumentsModal = () => (
     <div className="fixed inset-0 flex items-center justify-center z-[70]" style={{ background: 'rgba(13, 17, 23, 0.5)', backdropFilter: 'blur(4px)' }}>
       <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: 'rgb(255, 255, 255)', boxShadow: 'rgba(0, 0, 0, 0.2) 0px 20px 60px' }}>
@@ -1009,8 +937,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               fontSize: '13px',
               fontWeight: 700,
               cursor: selectedDocuments.length === 0 || messageSending ? 'not-allowed' : 'pointer',
-              border: 'none',
-              boxShadow: 'none'
+              border: 'none'
             }}
           >
             {messageSending ? 'Sending...' : 'Send Request'}
@@ -1020,7 +947,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
   );
 
-  // 6. Reject Candidate Modal
   const RejectModal = () => (
     <div className="fixed inset-0 flex items-center justify-center z-[70]" style={{ background: 'rgba(13, 17, 23, 0.5)', backdropFilter: 'blur(4px)' }}>
       <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: 'rgb(255, 255, 255)', boxShadow: 'rgba(0, 0, 0, 0.2) 0px 20px 60px' }}>
@@ -1029,7 +955,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <UserX size={18} stroke="#fff" strokeWidth={2} />
           </div>
           <div>
-            <h3 style={{ margin: 0, color: 'rgb(13, 17, 23)', fontSize: '16px' }}>Reject Candidate</h3>
+            <h3 style={{ margin: 0, color: 'rgb(13, 17, 23)', fontSize: '16px' }}>Reject Application</h3>
             <p style={{ fontSize: '12px', color: 'rgb(123, 130, 153)', marginTop: '2px' }}>
               Please provide a reason for rejecting {fullName}
             </p>
@@ -1044,7 +970,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             {rejectionOptions.map((reason) => (
               <button
                 key={reason}
-                onClick={() => selectRejectionReason(reason)}
+                onClick={() => setRejectionReason(reason)}
                 className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left"
                 style={{
                   border: '1.5px solid rgb(228, 233, 244)',
@@ -1105,8 +1031,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               fontSize: '13px',
               fontWeight: 700,
               cursor: !rejectionReason || updating ? 'not-allowed' : 'pointer',
-              border: 'none',
-              boxShadow: 'none'
+              border: 'none'
             }}
           >
             {updating ? 'Processing...' : 'Confirm Rejection'}
@@ -1116,9 +1041,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
   );
 
-  // --- Render Tabs ---
-
-  // 1. Personal Info Tab
+  // Render Tabs
   const renderPersonalInfo = () => (
     <div>
       <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
@@ -1147,55 +1070,47 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           </div>
           <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
             <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Date of Birth</span>
-            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{candidate.dateOfBirth || candidate.dob || 'N/A'}</span>
+            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{application.dateOfBirth || application.dob || 'N/A'}</span>
           </div>
           <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
             <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Nationality</span>
-            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{candidate.nationality || 'N/A'}</span>
-          </div>
-          <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
-            <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Right to Work</span>
-            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>
-              <span className="rounded-full px-2 py-0.5" style={{ fontSize: '11px', fontWeight: 700, background: candidate.rightToWork ? 'rgb(240, 253, 244)' : 'rgb(254, 242, 242)', color: candidate.rightToWork ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}>
-                {candidate.rightToWork ? '✓ Yes' : '✗ No'}
-              </span>
-            </span>
+            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{application.nationality || 'N/A'}</span>
           </div>
         </div>
         <div>
           <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
             <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Address Line 1</span>
-            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{candidate.addressLine1 || candidate.address || 'N/A'}</span>
+            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{application.addressLine1 || application.address || 'N/A'}</span>
           </div>
           <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
             <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Address Line 2</span>
-            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{candidate.addressLine2 || 'N/A'}</span>
+            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{application.addressLine2 || 'N/A'}</span>
           </div>
           <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
             <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Town / City</span>
-            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{candidate.city || 'N/A'}</span>
+            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{application.city || 'N/A'}</span>
           </div>
           <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
             <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>County</span>
-            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{candidate.county || 'N/A'}</span>
+            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{application.county || 'N/A'}</span>
           </div>
           <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
             <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Postcode</span>
-            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{candidate.postcode || 'N/A'}</span>
+            <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>{application.postcode || 'N/A'}</span>
           </div>
           <div className="flex items-start gap-3 py-2.5" style={{ borderBottom: '1px solid rgb(226, 236, 246)' }}>
-            <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Applied Date</span>
+            <span style={{ fontSize: '12px', color: 'rgb(100, 116, 139)', minWidth: '150px', flexShrink: 0 }}>Right to Work</span>
             <span style={{ fontSize: '13px', color: 'rgb(15, 23, 42)', fontWeight: 500 }}>
-              {candidate.appliedDate ? new Date(candidate.appliedDate).toLocaleDateString() : 
-               candidate.createdAt ? new Date(candidate.createdAt).toLocaleDateString() : 'N/A'}
+              <span className="rounded-full px-2 py-0.5" style={{ fontSize: '11px', fontWeight: 700, background: application.rightToWork ? 'rgb(240, 253, 244)' : 'rgb(254, 242, 242)', color: application.rightToWork ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}>
+                {application.rightToWork ? '✓ Yes' : '✗ No'}
+              </span>
             </span>
           </div>
         </div>
       </div>
 
-      {/* Documents */}
       <div className="mt-6">
-        <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
+        <div className="flex items-center gap-2 mb-3">
           <div className="w-0.5 h-4 rounded-full" style={{ background: 'rgb(39, 179, 201)' }} />
           <h4 style={{ fontSize: '12.5px', fontWeight: 700, color: 'rgb(15, 76, 129)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Application Documents ({documents.length})
@@ -1215,7 +1130,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                 <div className="flex-1 min-w-0">
                   <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(15, 23, 42)' }}>{doc.name}</p>
                   <p style={{ fontSize: '11px', color: 'rgb(100, 116, 139)' }}>
-                    {doc.size ? `${doc.size} · ` : ''}Uploaded {doc.uploaded}
+                    Uploaded {doc.uploaded}
                   </p>
                 </div>
                 <a 
@@ -1236,7 +1151,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
   );
 
-  // 2. Role & Availability Tab
   const renderRoleAvailability = () => (
     <div>
       <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
@@ -1261,8 +1175,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Preferred Locations</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {candidate.preferredLocations && candidate.preferredLocations.length > 0 ? (
-              candidate.preferredLocations.map((loc: string, index: number) => (
+            {application.preferredLocations && application.preferredLocations.length > 0 ? (
+              application.preferredLocations.map((loc: string, index: number) => (
                 <span key={index} className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: 'rgb(232, 241, 250)', color: 'rgb(15, 76, 129)' }}>
                   {loc}
                 </span>
@@ -1278,7 +1192,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <Clock size={16} stroke="#0F4C81" strokeWidth={2} />
             <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Work Preference</span>
           </div>
-          <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{candidate.workPreference || 'Not specified'}</p>
+          <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{application.workPreference || 'Not specified'}</p>
         </div>
 
         <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
@@ -1286,7 +1200,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <Calendar size={16} stroke="#0F4C81" strokeWidth={2} />
             <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Availability</span>
           </div>
-          <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{availability}</p>
+          <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{application.availability || 'Not specified'}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -1295,8 +1209,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               <Car size={16} stroke="#0F4C81" strokeWidth={2} />
               <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Driving License</span>
             </div>
-            <p className="text-sm" style={{ color: candidate.drivingLicense ? 'rgb(22, 163, 74)' : 'rgb(100, 116, 139)' }}>
-              {candidate.drivingLicense ? '✓ Yes' : '✗ No'}
+            <p className="text-sm" style={{ color: application.drivingLicense ? 'rgb(22, 163, 74)' : 'rgb(100, 116, 139)' }}>
+              {application.drivingLicense ? '✓ Yes' : '✗ No'}
             </p>
           </div>
           <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
@@ -1304,211 +1218,113 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               <Car size={16} stroke="#0F4C81" strokeWidth={2} />
               <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Own Vehicle</span>
             </div>
-            <p className="text-sm" style={{ color: candidate.ownVehicle ? 'rgb(22, 163, 74)' : 'rgb(100, 116, 139)' }}>
-              {candidate.ownVehicle ? '✓ Yes' : '✗ No'}
+            <p className="text-sm" style={{ color: application.ownVehicle ? 'rgb(22, 163, 74)' : 'rgb(100, 116, 139)' }}>
+              {application.ownVehicle ? '✓ Yes' : '✗ No'}
             </p>
           </div>
-        </div>
-
-        <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
-          <div className="flex items-center gap-2 mb-2">
-            <Shield size={16} stroke="#0F4C81" strokeWidth={2} />
-            <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Shift Confirmation</span>
-          </div>
-          <p className="text-sm" style={{ color: candidate.shiftConfirmation ? 'rgb(22, 163, 74)' : 'rgb(100, 116, 139)' }}>
-            {candidate.shiftConfirmation ? '✓ Confirmed' : 'Not confirmed'}
-          </p>
         </div>
       </div>
     </div>
   );
 
-  // 3. Qualifications Tab
   const renderQualifications = () => {
-    const educationList = Array.isArray(candidate.education) ? candidate.education : [];
-    const experienceList = Array.isArray(candidate.experience) ? candidate.experience : [];
-    const trainingList = Array.isArray(candidate.training) ? candidate.training : [];
-    const registrationsList = Array.isArray(candidate.registrations) ? candidate.registrations : [];
+    const educationList = Array.isArray(application.education) ? application.education : [];
+    const experienceList = Array.isArray(application.experience) ? application.experience : [];
+    const trainingList = Array.isArray(application.training) ? application.training : [];
+    const registrationsList = Array.isArray(application.registrations) ? application.registrations : [];
 
     return (
       <div className="space-y-4">
-        {/* Education */}
         <div className="rounded-xl overflow-hidden" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
-          <button
-            onClick={() => toggleSection('education')}
-            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
+          <button onClick={() => toggleSection('education')} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2">
               <GraduationCap size={16} stroke="#0F4C81" strokeWidth={2} />
-              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                Education ({educationList.length})
-              </span>
+              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Education ({educationList.length})</span>
             </div>
-            {expandedSections.education ? (
-              <ChevronUp size={16} stroke="#64748b" />
-            ) : (
-              <ChevronDown size={16} stroke="#64748b" />
-            )}
+            {expandedSections.education ? <ChevronUp size={16} stroke="#64748b" /> : <ChevronDown size={16} stroke="#64748b" />}
           </button>
-          
           {expandedSections.education && (
             <div className="px-4 pb-4 space-y-3">
-              {educationList.length === 0 ? (
-                <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No education entries</p>
-              ) : (
+              {educationList.length === 0 ? <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No education entries</p> :
                 educationList.map((edu: any, index: number) => (
                   <div key={edu.id || index} className="p-3 rounded-lg" style={{ background: 'white', border: '1px solid rgb(226, 236, 246)' }}>
-                    <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                      {edu.qualification || 'Qualification'}
-                    </p>
-                    <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>
-                      {edu.institution || 'Institution'}
-                    </p>
-                    <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-                      {edu.startDate || ''} {edu.endDate ? `- ${edu.endDate}` : ''}
-                      {edu.grade && ` • Grade: ${edu.grade}`}
-                    </p>
+                    <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>{edu.qualification || 'Qualification'}</p>
+                    <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{edu.institution || 'Institution'}</p>
+                    <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>{edu.startDate || ''} {edu.endDate ? `- ${edu.endDate}` : ''}{edu.grade && ` • Grade: ${edu.grade}`}</p>
                   </div>
                 ))
-              )}
+              }
             </div>
           )}
         </div>
 
-        {/* Experience */}
         <div className="rounded-xl overflow-hidden" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
-          <button
-            onClick={() => toggleSection('experience')}
-            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
+          <button onClick={() => toggleSection('experience')} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2">
               <Briefcase size={16} stroke="#0F4C81" strokeWidth={2} />
-              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                Experience ({experienceList.length})
-              </span>
+              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Experience ({experienceList.length})</span>
             </div>
-            {expandedSections.experience ? (
-              <ChevronUp size={16} stroke="#64748b" />
-            ) : (
-              <ChevronDown size={16} stroke="#64748b" />
-            )}
+            {expandedSections.experience ? <ChevronUp size={16} stroke="#64748b" /> : <ChevronDown size={16} stroke="#64748b" />}
           </button>
-          
           {expandedSections.experience && (
             <div className="px-4 pb-4 space-y-3">
-              {experienceList.length === 0 ? (
-                <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No experience entries</p>
-              ) : (
+              {experienceList.length === 0 ? <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No experience entries</p> :
                 experienceList.map((exp: any, index: number) => (
                   <div key={exp.id || index} className="p-3 rounded-lg" style={{ background: 'white', border: '1px solid rgb(226, 236, 246)' }}>
-                    <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                      {exp.position || 'Position'}
-                    </p>
-                    <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>
-                      {exp.employer || 'Employer'}
-                      {exp.current && <span className="ml-2 text-xs font-semibold" style={{ color: 'rgb(22, 163, 74)' }}>● Current</span>}
-                    </p>
-                    <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-                      {exp.startDate || ''} {exp.endDate ? `- ${exp.endDate}` : 'Present'}
-                    </p>
-                    {exp.responsibilities && (
-                      <p className="text-xs mt-1" style={{ color: 'rgb(71, 85, 105)' }}>
-                        {exp.responsibilities}
-                      </p>
-                    )}
+                    <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>{exp.position || 'Position'}</p>
+                    <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{exp.employer || 'Employer'}{exp.current && <span className="ml-2 text-xs font-semibold" style={{ color: 'rgb(22, 163, 74)' }}>● Current</span>}</p>
+                    <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>{exp.startDate || ''} {exp.endDate ? `- ${exp.endDate}` : 'Present'}</p>
+                    {exp.responsibilities && <p className="text-xs mt-1" style={{ color: 'rgb(71, 85, 105)' }}>{exp.responsibilities}</p>}
                   </div>
                 ))
-              )}
+              }
             </div>
           )}
         </div>
 
-        {/* Training */}
         <div className="rounded-xl overflow-hidden" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
-          <button
-            onClick={() => toggleSection('training')}
-            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
+          <button onClick={() => toggleSection('training')} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2">
               <BookOpen size={16} stroke="#0F4C81" strokeWidth={2} />
-              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                Training ({trainingList.length})
-              </span>
+              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Training ({trainingList.length})</span>
             </div>
-            {expandedSections.training ? (
-              <ChevronUp size={16} stroke="#64748b" />
-            ) : (
-              <ChevronDown size={16} stroke="#64748b" />
-            )}
+            {expandedSections.training ? <ChevronUp size={16} stroke="#64748b" /> : <ChevronDown size={16} stroke="#64748b" />}
           </button>
-          
           {expandedSections.training && (
             <div className="px-4 pb-4 space-y-3">
-              {trainingList.length === 0 ? (
-                <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No training entries</p>
-              ) : (
+              {trainingList.length === 0 ? <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No training entries</p> :
                 trainingList.map((train: any, index: number) => (
                   <div key={train.id || index} className="p-3 rounded-lg" style={{ background: 'white', border: '1px solid rgb(226, 236, 246)' }}>
-                    <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                      {train.name || 'Training'}
-                    </p>
-                    <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>
-                      {train.provider || 'Provider'}
-                    </p>
-                    <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-                      Completed: {train.dateCompleted || ''}
-                      {train.expiryDate && ` • Expires: ${train.expiryDate}`}
-                    </p>
-                    {train.certificate && (
-                      <p className="text-xs mt-1" style={{ color: 'rgb(22, 163, 74)' }}>
-                        ✓ Certificate uploaded
-                      </p>
-                    )}
+                    <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>{train.name || 'Training'}</p>
+                    <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{train.provider || 'Provider'}</p>
+                    <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>Completed: {train.dateCompleted || ''}{train.expiryDate && ` • Expires: ${train.expiryDate}`}</p>
+                    {train.certificate && <p className="text-xs mt-1" style={{ color: 'rgb(22, 163, 74)' }}>✓ Certificate uploaded</p>}
                   </div>
                 ))
-              )}
+              }
             </div>
           )}
         </div>
 
-        {/* Registrations */}
         <div className="rounded-xl overflow-hidden" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
-          <button
-            onClick={() => toggleSection('registrations')}
-            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
+          <button onClick={() => toggleSection('registrations')} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2">
               <Shield size={16} stroke="#0F4C81" strokeWidth={2} />
-              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                Registrations ({registrationsList.length})
-              </span>
+              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Registrations ({registrationsList.length})</span>
             </div>
-            {expandedSections.registrations ? (
-              <ChevronUp size={16} stroke="#64748b" />
-            ) : (
-              <ChevronDown size={16} stroke="#64748b" />
-            )}
+            {expandedSections.registrations ? <ChevronUp size={16} stroke="#64748b" /> : <ChevronDown size={16} stroke="#64748b" />}
           </button>
-          
           {expandedSections.registrations && (
             <div className="px-4 pb-4 space-y-3">
-              {registrationsList.length === 0 ? (
-                <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No registrations</p>
-              ) : (
+              {registrationsList.length === 0 ? <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No registrations</p> :
                 registrationsList.map((reg: any, index: number) => (
                   <div key={reg.id || index} className="p-3 rounded-lg" style={{ background: 'white', border: '1px solid rgb(226, 236, 246)' }}>
-                    <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                      {reg.body || 'Registration Body'}
-                    </p>
-                    <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>
-                      Number: {reg.number || 'N/A'}
-                    </p>
-                    <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-                      Expires: {reg.expiryDate || 'N/A'}
-                    </p>
+                    <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>{reg.body || 'Registration Body'}</p>
+                    <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>Number: {reg.number || 'N/A'}</p>
+                    <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>Expires: {reg.expiryDate || 'N/A'}</p>
                   </div>
                 ))
-              )}
+              }
             </div>
           )}
         </div>
@@ -1516,7 +1332,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     );
   };
 
-  // 4. Compliance Tab
   const renderCompliance = () => (
     <div>
       <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
@@ -1532,8 +1347,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <Shield size={16} stroke="#0F4C81" strokeWidth={2} />
             <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>DBS Valid</span>
           </div>
-          <p className="text-sm" style={{ color: candidate.dbsValid ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}>
-            {candidate.dbsValid ? '✓ Yes' : '✗ No'}
+          <p className="text-sm" style={{ color: application.dbsValid ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)' }}>
+            {application.dbsValid ? '✓ Yes' : '✗ No'}
           </p>
         </div>
 
@@ -1542,8 +1357,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <AlertCircle size={16} stroke="#0F4C81" strokeWidth={2} />
             <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Disciplinary Action</span>
           </div>
-          <p className="text-sm" style={{ color: candidate.disciplinaryAction ? 'rgb(220, 38, 38)' : 'rgb(22, 163, 74)' }}>
-            {candidate.disciplinaryAction ? 'Yes' : 'No'}
+          <p className="text-sm" style={{ color: application.disciplinaryAction ? 'rgb(220, 38, 38)' : 'rgb(22, 163, 74)' }}>
+            {application.disciplinaryAction ? 'Yes' : 'No'}
           </p>
         </div>
 
@@ -1552,57 +1367,32 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <Lock size={16} stroke="#0F4C81" strokeWidth={2} />
             <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Unspent Convictions</span>
           </div>
-          <p className="text-sm" style={{ color: candidate.unspentConvictions ? 'rgb(220, 38, 38)' : 'rgb(22, 163, 74)' }}>
-            {candidate.unspentConvictions ? 'Yes' : 'No'}
+          <p className="text-sm" style={{ color: application.unspentConvictions ? 'rgb(220, 38, 38)' : 'rgb(22, 163, 74)' }}>
+            {application.unspentConvictions ? 'Yes' : 'No'}
           </p>
         </div>
 
-        {/* References */}
         <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
           <div className="flex items-center gap-2 mb-2">
             <Users size={16} stroke="#0F4C81" strokeWidth={2} />
-            <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>References ({candidate.references?.length || 0})</span>
+            <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>References ({application.references?.length || 0})</span>
           </div>
-          {candidate.references && candidate.references.length > 0 ? (
-            candidate.references.map((ref: any, index: number) => (
+          {application.references && application.references.length > 0 ? (
+            application.references.map((ref: any, index: number) => (
               <div key={ref.id || index} className="mt-2 p-2 rounded-lg" style={{ background: 'white', border: '1px solid rgb(226, 236, 246)' }}>
                 <p className="text-sm font-medium" style={{ color: '#0f172a' }}>{ref.fullName || 'N/A'}</p>
-                <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-                  {ref.company || ''} {ref.jobTitle ? `· ${ref.jobTitle}` : ''}
-                </p>
-                <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-                  {ref.type || 'Professional'} · {ref.yearsKnown || 'N/A'} known
-                </p>
+                <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>{ref.company || ''} {ref.jobTitle ? `· ${ref.jobTitle}` : ''}</p>
+                <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>{ref.type || 'Professional'} · {ref.yearsKnown || 'N/A'} known</p>
               </div>
             ))
           ) : (
             <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No references provided</p>
           )}
         </div>
-
-        {/* Documents URLs */}
-        {(candidate.drivingLicenceUrl || candidate.dbsCertificateUrl || candidate.referencesUrl) && (
-          <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <FileText size={16} stroke="#0F4C81" strokeWidth={2} />
-              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Compliance Documents</span>
-            </div>
-            {candidate.drivingLicenceUrl && (
-              <p className="text-xs mt-1" style={{ color: 'rgb(22, 163, 74)' }}>✓ Driving Licence uploaded</p>
-            )}
-            {candidate.dbsCertificateUrl && (
-              <p className="text-xs mt-1" style={{ color: 'rgb(22, 163, 74)' }}>✓ DBS Certificate uploaded</p>
-            )}
-            {candidate.referencesUrl && (
-              <p className="text-xs mt-1" style={{ color: 'rgb(22, 163, 74)' }}>✓ References document uploaded</p>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
 
-  // 5. Assessment Tab
   const renderAssessment = () => (
     <div>
       <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
@@ -1618,7 +1408,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <Users size={16} stroke="#0F4C81" strokeWidth={2} />
             <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Heard From</span>
           </div>
-          <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{candidate.heardFrom || 'Not specified'}</p>
+          <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{application.heardFrom || 'Not specified'}</p>
         </div>
 
         <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
@@ -1626,44 +1416,40 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <MessageSquare size={16} stroke="#0F4C81" strokeWidth={2} />
             <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Supporting Statement</span>
           </div>
-          <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>
-            {candidate.supportingStatement || 'Not provided'}
-          </p>
+          <p className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{application.supportingStatement || 'Not provided'}</p>
         </div>
 
-        <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
-          <div className="flex items-center gap-2 mb-2">
-            <BookOpen size={16} stroke="#0F4C81" strokeWidth={2} />
-            <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Scenario Answers</span>
-          </div>
-          {candidate.scenarioAnswers ? (
+        {application.scenarioAnswers && (
+          <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen size={16} stroke="#0F4C81" strokeWidth={2} />
+              <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Scenario Answers</span>
+            </div>
             <div className="space-y-2 mt-2">
               <div className="p-2 rounded-lg" style={{ background: 'white', border: '1px solid rgb(226, 236, 246)' }}>
                 <p className="text-xs font-medium" style={{ color: '#0f172a' }}>Question 1</p>
-                <p className="text-xs" style={{ color: 'rgb(71, 85, 105)' }}>{candidate.scenarioAnswers.q1 || 'Not answered'}</p>
+                <p className="text-xs" style={{ color: 'rgb(71, 85, 105)' }}>{application.scenarioAnswers.q1 || 'Not answered'}</p>
               </div>
               <div className="p-2 rounded-lg" style={{ background: 'white', border: '1px solid rgb(226, 236, 246)' }}>
                 <p className="text-xs font-medium" style={{ color: '#0f172a' }}>Question 2</p>
-                <p className="text-xs" style={{ color: 'rgb(71, 85, 105)' }}>{candidate.scenarioAnswers.q2 || 'Not answered'}</p>
+                <p className="text-xs" style={{ color: 'rgb(71, 85, 105)' }}>{application.scenarioAnswers.q2 || 'Not answered'}</p>
               </div>
               <div className="p-2 rounded-lg" style={{ background: 'white', border: '1px solid rgb(226, 236, 246)' }}>
                 <p className="text-xs font-medium" style={{ color: '#0f172a' }}>Question 3</p>
-                <p className="text-xs" style={{ color: 'rgb(71, 85, 105)' }}>{candidate.scenarioAnswers.q3 || 'Not answered'}</p>
+                <p className="text-xs" style={{ color: 'rgb(71, 85, 105)' }}>{application.scenarioAnswers.q3 || 'Not answered'}</p>
               </div>
             </div>
-          ) : (
-            <p className="text-sm" style={{ color: 'rgb(100, 116, 139)' }}>No answers provided</p>
-          )}
-        </div>
+          </div>
+        )}
 
-        {candidate.coreValues && candidate.coreValues.length > 0 && (
+        {application.coreValues && application.coreValues.length > 0 && (
           <div className="p-4 rounded-xl" style={{ background: 'rgb(248, 250, 252)', border: '1px solid rgb(226, 236, 246)' }}>
             <div className="flex items-center gap-2 mb-2">
               <Star size={16} stroke="#0F4C81" strokeWidth={2} />
               <span className="font-semibold text-sm" style={{ color: '#0f172a' }}>Core Values (Ranked)</span>
             </div>
             <div className="space-y-1">
-              {candidate.coreValues.map((value: string, index: number) => (
+              {application.coreValues.map((value: string, index: number) => (
                 <div key={index} className="flex items-center gap-2">
                   <span className="text-xs font-bold" style={{ color: '#0F4C81' }}>{index + 1}.</span>
                   <span className="text-sm" style={{ color: 'rgb(71, 85, 105)' }}>{value}</span>
@@ -1676,7 +1462,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     </div>
   );
 
-  // 6. Timeline Tab
   const renderTimeline = () => (
     <div>
       <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
@@ -1687,7 +1472,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       </div>
       
       <div className="space-y-4">
-        {/* Applied */}
         <div className="flex gap-3">
           <div className="flex flex-col items-center">
             <div className="w-3 h-3 rounded-full" style={{ background: '#7c3aed' }} />
@@ -1696,50 +1480,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           <div className="pb-4">
             <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>Applied</p>
             <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-              {candidate.appliedDate || (candidate.createdAt ? new Date(candidate.createdAt).toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-              }) : 'N/A')}
-            </p>
-          </div>
-        </div>
-        
-        {/* Status Changes from applications */}
-        {applications.length > 0 && applications.map((app, index) => (
-          <div key={app._id} className="flex gap-3">
-            <div className="flex flex-col items-center">
-              <div className="w-3 h-3 rounded-full" style={{ background: getAppStatusStyle(app.status).color }} />
-              {index < applications.length - 1 && (
-                <div className="w-0.5 flex-1 mt-1" style={{ background: 'rgb(226, 236, 246)' }} />
-              )}
-            </div>
-            <div className={index < applications.length - 1 ? 'pb-4' : ''}>
-              <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-                {app.status}
-              </p>
-              <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-                {app.jobTitle} · {new Date(app.appliedDate).toLocaleDateString('en-GB', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric'
-                })}
-              </p>
-            </div>
-          </div>
-        ))}
-        
-        {/* Current Status */}
-        <div className="flex gap-3">
-          <div className="flex flex-col items-center">
-            <div className="w-3 h-3 rounded-full" style={{ background: statusStyle.color }} />
-          </div>
-          <div>
-            <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
-              Current Status: {candidate.status}
-            </p>
-            <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
-              Last updated: {candidate.updatedAt ? new Date(candidate.updatedAt).toLocaleDateString('en-GB', {
+              {application.applicationDate ? new Date(application.applicationDate).toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric'
@@ -1747,20 +1488,45 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             </p>
           </div>
         </div>
+
+        <div className="flex gap-3">
+          <div className="flex flex-col items-center">
+            <div className="w-3 h-3 rounded-full" style={{ background: getStatusStyle(application.status).color }} />
+          </div>
+          <div>
+            <p className="font-semibold text-sm" style={{ color: '#0f172a' }}>
+              Current Status: {application.status}
+            </p>
+            <p className="text-xs" style={{ color: 'rgb(100, 116, 139)' }}>
+              Last updated: {application.updatedAt ? new Date(application.updatedAt).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              }) : 'N/A'}
+            </p>
+            {application.interviewDate && (
+              <p className="text-xs mt-1" style={{ color: 'rgb(124, 58, 237)' }}>
+                Interview: {new Date(application.interviewDate).toLocaleDateString('en-GB', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 
-  // --- Main Return ---
+  // Main Render
   return (
     <>
-      {/* Overlay */}
-     <div 
+      <div 
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
         onClick={onClose}
       />
 
-      {/* Sidebar */}
       <div style={{ 
         position: 'fixed', 
         top: 0, 
@@ -1799,7 +1565,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                 style={{ 
                   width: '16px', 
                   height: '16px', 
-                  background: candidate.status === 'Active' || candidate.status === 'Hired' ? 'rgb(16, 185, 129)' : 'rgb(202, 138, 4)',
+                  background: application.status === 'Active' || application.status === 'Hired' ? 'rgb(16, 185, 129)' : 'rgb(202, 138, 4)',
                   border: '2px solid rgb(255, 255, 255)' 
                 }}
               />
@@ -1815,7 +1581,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                   style={{ fontSize: '11px', fontWeight: 700, background: statusStyle.bg, color: statusStyle.color }}
                 >
                   <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusStyle.dot, display: 'inline-block' }} />
-                  {candidate.status}
+                  {application.status}
                 </span>
               </div>
               <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(71, 85, 105)', marginBottom: '6px' }}>
@@ -1836,7 +1602,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                 </span>
                 <span className="flex items-center gap-1" style={{ fontSize: '11px', color: 'rgb(100, 116, 139)' }}>
                   <Hash size={10} stroke="#27B3C9" strokeWidth={2} />
-                  RMX-C{String(candidate._id || candidate.id || '').substring(0, 6)}-2026
+                  APP-{String(application._id || '').substring(0, 6)}
                 </span>
               </div>
             </div>
@@ -1844,14 +1610,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <button 
               onClick={onClose}
               className="flex items-center justify-center rounded-xl"
-              style={{ 
-                width: '32px', 
-                height: '32px', 
-                background: 'rgb(241, 245, 249)', 
-                border: 'none', 
-                cursor: 'pointer', 
-                flexShrink: 0 
-              }}
+              style={{ width: '32px', height: '32px', background: 'rgb(241, 245, 249)', border: 'none', cursor: 'pointer', flexShrink: 0 }}
             >
               <X size={15} stroke="#64748B" strokeWidth={2} />
             </button>
@@ -1861,17 +1620,17 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           <div className="px-5 pb-3 flex items-center gap-2 flex-wrap">
             <span 
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1"
-              style={{ fontSize: '11px', fontWeight: 700, background: candidate.rightToWork ? 'rgb(240, 253, 244)' : 'rgb(254, 242, 242)', color: candidate.rightToWork ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)', border: candidate.rightToWork ? '1px solid rgb(187, 247, 208)' : '1px solid rgb(254, 202, 202)' }}
+              style={{ fontSize: '11px', fontWeight: 700, background: application.rightToWork ? 'rgb(240, 253, 244)' : 'rgb(254, 242, 242)', color: application.rightToWork ? 'rgb(22, 163, 74)' : 'rgb(220, 38, 38)', border: application.rightToWork ? '1px solid rgb(187, 247, 208)' : '1px solid rgb(254, 202, 202)' }}
             >
-              <span style={{ fontSize: '13px' }}>{candidate.rightToWork ? '✓' : '✗'}</span> 
-              Right to Work: {candidate.rightToWork ? 'Verified' : 'Not Verified'}
+              <span style={{ fontSize: '13px' }}>{application.rightToWork ? '✓' : '✗'}</span> 
+              Right to Work: {application.rightToWork ? 'Verified' : 'Not Verified'}
             </span>
             <span 
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1"
               style={{ fontSize: '11px', fontWeight: 700, background: 'rgb(255, 251, 235)', color: 'rgb(180, 83, 9)', border: '1px solid rgb(253, 230, 138)' }}
             >
               <Lock size={12} stroke="#7C3AED" strokeWidth={2} />
-              DBS Status: {candidate.dbsValid ? 'Valid' : 'Initiated'}
+              DBS Status: {application.dbsValid ? 'Valid' : 'Initiated'}
             </span>
           </div>
 
@@ -1880,7 +1639,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <button 
               className="flex items-center gap-2 flex-1 justify-center py-2.5 rounded-xl"
               onClick={() => setShowInterviewModal(true)}
-              style={{ background: 'rgb(5, 150, 105)', color: 'rgb(255, 255, 255)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: 'none', boxShadow: 'none' }}
+              style={{ background: 'rgb(5, 150, 105)', color: 'rgb(255, 255, 255)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: 'none' }}
             >
               <CircleCheckBig size={15} stroke="currentColor" strokeWidth={2} />
               Approve For Interview
@@ -1893,8 +1652,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               <MessageSquare size={15} stroke="currentColor" strokeWidth={2} />
               Request More Info
             </button>
-
-                        <button 
+            <button 
               className="flex items-center gap-2 flex-1 justify-center py-2.5 rounded-xl"
               onClick={() => setShowRejectModal(true)}
               style={{ background: 'rgb(254, 242, 242)', color: 'rgb(220, 38, 38)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: '1.5px solid rgb(254, 202, 202)' }}
@@ -1904,9 +1662,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             </button>
           </div>
 
-          {/* Second row of action buttons */}
           <div className="px-5 pb-2 flex items-center gap-2.5">
-
             <button 
               className="flex items-center gap-2 flex-1 justify-center py-2.5 rounded-xl"
               onClick={() => setShowStandbyModal(true)}
@@ -1915,6 +1671,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               <ArrowRight size={14} stroke="currentColor" strokeWidth={2} />
               Move to Standby
             </button>
+            {/* <button 
+              className="flex items-center gap-2 flex-1 justify-center py-2.5 rounded-xl"
+              onClick={() => setShowStatusModal(true)}
+              style={{ background: 'rgb(241, 245, 249)', color: 'rgb(71, 85, 105)', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', border: '1px solid rgb(203, 213, 225)' }}
+            >
+              <CircleCheckBig size={14} stroke="currentColor" strokeWidth={2} />
+              Update Status
+            </button> */}
           </div>
         </div>
 
