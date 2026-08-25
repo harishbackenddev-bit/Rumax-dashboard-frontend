@@ -49,6 +49,8 @@ interface Education {
   startDate: string;
   endDate: string;
   grade: string;
+  _aiFilled?: boolean;
+  _confidence?: 'high' | 'medium' | 'low';
 }
 
 interface Experience {
@@ -59,6 +61,8 @@ interface Experience {
   endDate: string;
   current: boolean;
   responsibilities: string;
+  _aiFilled?: boolean;
+  _confidence?: 'high' | 'medium' | 'low';
 }
 
 interface Training {
@@ -69,6 +73,8 @@ interface Training {
   expiryDate: string;
   certificate: string;
   certificateFile: File | null;
+  _aiFilled?: boolean;
+  _confidence?: 'high' | 'medium' | 'low';
 }
 
 interface Registration {
@@ -76,6 +82,8 @@ interface Registration {
   body: string;
   number: string;
   expiryDate: string;
+  _aiFilled?: boolean;
+  _confidence?: 'high' | 'medium' | 'low';
 }
 
 interface Reference {
@@ -88,7 +96,124 @@ interface Reference {
   relationship: string;
   yearsKnown: string;
   type: string;
+  _aiFilled?: boolean;
+  _confidence?: 'high' | 'medium' | 'low';
 }
+
+// ============================================
+// HELPER: Smart field mapper - tries multiple field names
+// ============================================
+const smartMap = (obj: any, fieldNames: string[], defaultValue: string = ''): string => {
+  if (!obj) return defaultValue;
+  for (const field of fieldNames) {
+    if (obj[field] !== undefined && obj[field] !== null && obj[field] !== '') {
+      return String(obj[field]);
+    }
+  }
+  return defaultValue;
+};
+
+// ============================================
+// HELPER: Map Education from any format to our format
+// ============================================
+const mapEducation = (edu: any): Education => {
+  return {
+    id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    institution: smartMap(edu, ['institution', 'college', 'school', 'university', 'institute', 'name', 'organization']),
+    qualification: smartMap(edu, ['qualification', 'course', 'degree', 'class', 'diploma', 'title', 'certification', 'program']),
+    startDate: smartMap(edu, ['startDate', 'start_date', 'year', 'from', 'start', 'date', 'completionYear']),
+    endDate: smartMap(edu, ['endDate', 'end_date', 'to', 'end', 'completionDate', 'completion_date', 'graduationYear']),
+    grade: smartMap(edu, ['grade', 'percentage', 'marks', 'score', 'gpa', 'result', 'cgpa', 'gpa_scale']),
+    _aiFilled: true,
+    _confidence: 'high' as const
+  };
+};
+
+// ============================================
+// HELPER: Map Experience from any format to our format
+// ============================================
+const mapExperience = (exp: any): Experience => {
+  return {
+    id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    employer: smartMap(exp, ['employer', 'company', 'organization', 'org', 'firm', 'name', 'corporate']),
+    position: smartMap(exp, ['position', 'role', 'jobTitle', 'title', 'designation', 'job_title', 'occupation']),
+    startDate: smartMap(exp, ['startDate', 'start_date', 'from', 'start', 'joined']),
+    endDate: smartMap(exp, ['endDate', 'end_date', 'to', 'end', 'left', 'resigned']),
+    current: exp.current || exp.isCurrent || exp.present || false,
+    responsibilities: smartMap(exp, ['responsibilities', 'description', 'duties', 'summary', 'details', 'achievements']),
+    _aiFilled: true,
+    _confidence: 'high' as const
+  };
+};
+
+// ============================================
+// HELPER: Map Training from any format to our format
+// ============================================
+const mapTraining = (train: any): Training => {
+  return {
+    id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name: smartMap(train, ['name', 'trainingName', 'title', 'course', 'program', 'certification', 'workshop']),
+    provider: smartMap(train, ['provider', 'organization', 'institute', 'school', 'company', 'trainer', 'authority']),
+    dateCompleted: smartMap(train, ['dateCompleted', 'completionDate', 'date', 'completed', 'finishDate', 'issueDate']),
+    expiryDate: smartMap(train, ['expiryDate', 'expirationDate', 'expires', 'validTill', 'validUntil', 'renewal']),
+    certificate: smartMap(train, ['certificate', 'certificateUrl', 'url', 'document', 'file', 'attachment']),
+    certificateFile: null,
+    _aiFilled: true,
+    _confidence: 'high' as const
+  };
+};
+
+// ============================================
+// HELPER: Map Registration from any format to our format
+// ============================================
+const mapRegistration = (reg: any): Registration => {
+  return {
+    id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    body: smartMap(reg, ['body', 'registrationBody', 'organization', 'board', 'authority', 'name', 'institution']),
+    number: smartMap(reg, ['number', 'registrationNumber', 'id', 'code', 'license', 'certificateNumber']),
+    expiryDate: smartMap(reg, ['expiryDate', 'expirationDate', 'validTill', 'validUntil', 'expires', 'renewal']),
+    _aiFilled: true,
+    _confidence: 'high' as const
+  };
+};
+
+// ============================================
+// HELPER: Map Reference from any format to our format
+// ============================================
+const mapReference = (ref: any): Reference => {
+  return {
+    id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    fullName: smartMap(ref, ['fullName', 'name', 'fullname', 'referee', 'contact', 'person']),
+    company: smartMap(ref, ['company', 'organization', 'org', 'employer', 'firm', 'business']),
+    jobTitle: smartMap(ref, ['jobTitle', 'position', 'title', 'role', 'designation', 'occupation']),
+    phone: smartMap(ref, ['phone', 'phoneNumber', 'contact', 'mobile', 'telephone', 'cell']),
+    email: smartMap(ref, ['email', 'emailAddress', 'mail', 'eMail', 'email_id']),
+    relationship: smartMap(ref, ['relationship', 'relation', 'type', 'referenceType', 'connection']),
+    yearsKnown: smartMap(ref, ['yearsKnown', 'years', 'duration', 'knownSince', 'time']),
+    type: smartMap(ref, ['type', 'referenceType', 'category'], 'Professional'),
+    _aiFilled: true,
+    _confidence: 'high' as const
+  };
+};
+
+// ============================================
+// HELPER: Map any object to the correct type
+// ============================================
+const mapAnyData = (data: any, type: 'education' | 'experience' | 'training' | 'registration' | 'reference') => {
+  if (!data) return [];
+  if (!Array.isArray(data)) {
+    data = [data];
+  }
+  
+  switch(type) {
+    case 'education': return data.map(mapEducation);
+    case 'experience': return data.map(mapExperience);
+    case 'training': return data.map(mapTraining);
+    case 'registration': return data.map(mapRegistration);
+    case 'reference': return data.map(mapReference);
+    default: return [];
+  }
+};
 
 const ApplyJob: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -106,6 +231,19 @@ const ApplyJob: React.FC = () => {
   const [coverLetterUrl, setCoverLetterUrl] = useState<string>('');
   const [isResumeUploading, setIsResumeUploading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // AI States for Step 3
+  const [aiStep3Data, setAiStep3Data] = useState<{
+    education?: Education[];
+    experience?: Experience[];
+    training?: Training[];
+    registrations?: Registration[];
+  } | undefined>(undefined);
+  const [step3AutoFillSuccess, setStep3AutoFillSuccess] = useState(false);
+
+  // AI States for Step 4
+  const [aiReferences, setAiReferences] = useState<Reference[]>([]);
+  const [step4AutoFillSuccess, setStep4AutoFillSuccess] = useState(false);
 
   // Step 1: Personal Information
   const [personalInfo, setPersonalInfo] = useState({
@@ -269,7 +407,6 @@ const ApplyJob: React.FC = () => {
       return;
     }
 
-    // Upload the file
     const url = await uploadDocument(file, fileType);
     if (!url) return;
 
@@ -280,7 +417,7 @@ const ApplyJob: React.FC = () => {
 
       try {
         const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
-        
+
         if (!apiKey) {
           toast.error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to .env');
           setIsResumeUploading(false);
@@ -291,7 +428,10 @@ const ApplyJob: React.FC = () => {
         
         const parsedData = await resumeParserService.parseResumeWithAI(file, apiKey);
         console.log('✅ AI Parsed Data:', parsedData);
-        
+
+        // ============================================
+        // STEP 1: Personal Information Auto-Fill
+        // ============================================
         setPersonalInfo(prev => ({
           ...prev,
           firstName: parsedData.firstName || prev.firstName,
@@ -308,7 +448,55 @@ const ApplyJob: React.FC = () => {
           rightToWork: parsedData.rightToWork || prev.rightToWork,
         }));
 
-        toast.success('✅ Resume uploaded and AI auto-filled successfully!', { id: 'resume-parsing' });
+        // ============================================
+        // STEP 3: Qualifications & Experience Auto-Fill
+        // Using the smart mapper - handles ANY format
+        // ============================================
+        const aiEducation = mapAnyData(parsedData.education, 'education');
+        const aiExperience = mapAnyData(parsedData.experience, 'experience');
+        const aiTraining = mapAnyData(parsedData.training, 'training');
+        const aiRegistrations = mapAnyData(parsedData.registrations, 'registration');
+
+        console.log('📚 Mapped Education:', aiEducation);
+        console.log('💼 Mapped Experience:', aiExperience);
+        console.log('🎓 Mapped Training:', aiTraining);
+        console.log('📋 Mapped Registrations:', aiRegistrations);
+
+        // Store AI data for Step 3
+        setAiStep3Data({
+          education: aiEducation,
+          experience: aiExperience,
+          training: aiTraining,
+          registrations: aiRegistrations
+        });
+
+        const hasStep3Data = aiEducation.length > 0 || aiExperience.length > 0 || 
+                            aiTraining.length > 0 || aiRegistrations.length > 0;
+        setStep3AutoFillSuccess(hasStep3Data);
+
+        // ============================================
+        // STEP 4: References Auto-Fill
+        // ============================================
+        const aiReferencesData = mapAnyData(parsedData.references, 'reference');
+        console.log('📧 Mapped References:', aiReferencesData);
+
+        setAiReferences(aiReferencesData);
+        setStep4AutoFillSuccess(aiReferencesData.length > 0);
+
+        // Show summary of what was found
+        let summary = [];
+        if (aiEducation.length > 0) summary.push(`${aiEducation.length} Education`);
+        if (aiExperience.length > 0) summary.push(`${aiExperience.length} Experience`);
+        if (aiTraining.length > 0) summary.push(`${aiTraining.length} Training`);
+        if (aiRegistrations.length > 0) summary.push(`${aiRegistrations.length} Registrations`);
+        if (aiReferencesData.length > 0) summary.push(`${aiReferencesData.length} References`);
+
+        if (summary.length > 0) {
+          toast.success(`✅ AI found: ${summary.join(', ')}`, { id: 'resume-parsing' });
+        } else {
+          // toast.info('No data found in resume. Please fill in manually.', { id: 'resume-parsing' });
+        }
+
       } catch (error: any) {
         console.error('❌ AI parsing error:', error);
         toast.error(error.message || 'Failed to parse resume with AI. Please fill in manually.', { id: 'resume-parsing' });
@@ -347,6 +535,10 @@ const ApplyJob: React.FC = () => {
     if (fileType === 'resume') {
       setResumeFile(null);
       setResumeUrl('');
+      setAiStep3Data(undefined);
+      setStep3AutoFillSuccess(false);
+      setAiReferences([]);
+      setStep4AutoFillSuccess(false);
     } else if (fileType === 'coverLetter') {
       setCoverLetterFile(null);
       setCoverLetterUrl('');
@@ -894,6 +1086,138 @@ const ApplyJob: React.FC = () => {
     }
   };
 
+  // ============================================
+  // CLEAR AI DATA HANDLERS
+  // ============================================
+  const handleClearAIStep3Data = () => {
+    setAiStep3Data(undefined);
+    setStep3AutoFillSuccess(false);
+  };
+
+  const handleClearAIStep4Data = () => {
+    setAiReferences([]);
+    setStep4AutoFillSuccess(false);
+  };
+
+  // ============================================
+  // HANDLER TO APPLY AI DATA TO STEP 3
+  // ============================================
+  const handleApplyAIStep3Data = (data: {
+    education?: Education[];
+    experience?: Experience[];
+    training?: Training[];
+    registrations?: Registration[];
+  }) => {
+    console.log('🔄 Applying AI data to Step 3:', data);
+    
+    let appliedCount = 0;
+
+    // Apply Education
+    if (data.education && data.education.length > 0) {
+      data.education.forEach((edu) => {
+        const exists = qualifications.education.some(e => 
+          e.institution === edu.institution && 
+          e.qualification === edu.qualification
+        );
+        if (!exists && (edu.institution || edu.qualification)) {
+          setQualifications(prev => ({
+            ...prev,
+            education: [...prev.education, edu]
+          }));
+          appliedCount++;
+        }
+      });
+    }
+
+    // Apply Experience
+    if (data.experience && data.experience.length > 0) {
+      data.experience.forEach((exp) => {
+        const exists = qualifications.experience.some(e => 
+          e.employer === exp.employer && 
+          e.position === exp.position
+        );
+        if (!exists && (exp.employer || exp.position)) {
+          setQualifications(prev => ({
+            ...prev,
+            experience: [...prev.experience, exp]
+          }));
+          appliedCount++;
+        }
+      });
+    }
+
+    // Apply Training
+    if (data.training && data.training.length > 0) {
+      data.training.forEach((train) => {
+        const exists = qualifications.training.some(t => 
+          t.name === train.name && 
+          t.provider === train.provider
+        );
+        if (!exists && train.name) {
+          setQualifications(prev => ({
+            ...prev,
+            training: [...prev.training, train]
+          }));
+          appliedCount++;
+        }
+      });
+    }
+
+    // Apply Registrations
+    if (data.registrations && data.registrations.length > 0) {
+      data.registrations.forEach((reg) => {
+        const exists = qualifications.registrations.some(r => 
+          r.body === reg.body && 
+          r.number === reg.number
+        );
+        if (!exists && reg.body) {
+          setQualifications(prev => ({
+            ...prev,
+            registrations: [...prev.registrations, reg]
+          }));
+          appliedCount++;
+        }
+      });
+    }
+
+    if (appliedCount > 0) {
+      toast.success(`✅ ${appliedCount} AI items applied to Step 3!`);
+    } else {
+      // toast.info('No new AI data to apply. All entries may already exist.');
+    }
+  };
+
+  // ============================================
+  // HANDLER TO APPLY AI DATA TO STEP 4 (REFERENCES)
+  // ============================================
+  const handleApplyAIStep4Data = (referencesData: Reference[]) => {
+    console.log('🔄 Applying AI references data:', referencesData);
+    
+    let appliedCount = 0;
+    
+    if (referencesData && referencesData.length > 0) {
+      referencesData.forEach((ref) => {
+        const exists = compliance.references.some(r => 
+          r.fullName === ref.fullName && 
+          r.company === ref.company
+        );
+        if (!exists && (ref.fullName || ref.company)) {
+          setCompliance(prev => ({
+            ...prev,
+            references: [...prev.references, ref]
+          }));
+          appliedCount++;
+        }
+      });
+    }
+    
+    if (appliedCount > 0) {
+      toast.success(`✅ ${appliedCount} AI references applied to Step 4!`);
+    } else {
+      // toast.info('No new references to apply.');
+    }
+  };
+
   // ---- Render Step ----
   const renderStep = () => {
     switch(step) {
@@ -945,6 +1269,10 @@ const ApplyJob: React.FC = () => {
             onTrainingChange={handleTrainingChange}
             onTrainingCertificateUpload={handleTrainingCertificateUpload}
             onRegistrationChange={handleRegistrationChange}
+            aiFilledData={aiStep3Data}
+            autoFillSuccess={step3AutoFillSuccess}
+            onClearAIData={handleClearAIStep3Data}
+            onApplyAIData={handleApplyAIStep3Data}
           />
         );
       case 4:
@@ -962,6 +1290,7 @@ const ApplyJob: React.FC = () => {
             dbsCertificateUrl={compliance.dbsCertificateUrl}
             referencesFile={compliance.referencesFile}
             referencesUrl={compliance.referencesUrl}
+            isUploading={isUploading}
             onAddReference={handleAddReference}
             onRemoveReference={handleRemoveReference}
             onReferenceChange={handleReferenceChange}
@@ -969,7 +1298,10 @@ const ApplyJob: React.FC = () => {
             onDocumentUpload={handleDocumentUpload}
             onFileUpload={handleFileUpload}
             onFileRemove={handleFileRemove}
-            isUploading={isUploading}
+            aiFilledReferences={aiReferences}
+            autoFillSuccess={step4AutoFillSuccess}
+            onClearAIData={handleClearAIStep4Data}
+            onApplyAIData={handleApplyAIStep4Data}
           />
         );
       case 5:

@@ -1,6 +1,6 @@
 // components/website/applyjob/Step4.tsx
-import React from 'react';
-import { Plus, Trash2, Upload, FileText, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Upload, FileText, X, Sparkles, Check } from 'lucide-react';
 
 interface Reference {
   id: string;
@@ -12,6 +12,8 @@ interface Reference {
   relationship: string;
   yearsKnown: string;
   type: string;
+  _aiFilled?: boolean;
+  _confidence?: 'high' | 'medium' | 'low';
 }
 
 interface Step4Props {
@@ -35,6 +37,10 @@ interface Step4Props {
   onDocumentUpload: (files: FileList) => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>, type: string) => void;
   onFileRemove: (type: string) => void;
+  aiFilledReferences?: Reference[];
+  autoFillSuccess?: boolean;
+  onClearAIData?: () => void;
+  onApplyAIData?: (referencesData: Reference[]) => void;  // ← Add this
 }
 
 const Step4: React.FC<Step4Props> = ({
@@ -57,12 +63,131 @@ const Step4: React.FC<Step4Props> = ({
   onRadioChange,
   onDocumentUpload,
   onFileUpload,
-  onFileRemove
+  onFileRemove,
+  aiFilledReferences = [],
+  autoFillSuccess = false,
+  onClearAIData,
+  onApplyAIData  // ← Add this
 }) => {
+  const [showAISuggestions, setShowAISuggestions] = useState(false);
+  const [appliedAIData, setAppliedAIData] = useState(false);
+
+  useEffect(() => {
+    if (aiFilledReferences && aiFilledReferences.length > 0 && autoFillSuccess && !appliedAIData) {
+      setShowAISuggestions(true);
+    }
+  }, [aiFilledReferences, autoFillSuccess]);
+
   const radioOptions = ['Yes', 'No'];
+
+  const getConfidenceBadge = (confidence?: 'high' | 'medium' | 'low') => {
+    if (!confidence) return null;
+    const styles = {
+      high: { bg: 'bg-green-100', text: 'text-green-700', label: 'High' },
+      medium: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Medium' },
+      low: { bg: 'bg-red-100', text: 'text-red-700', label: 'Low' }
+    };
+    const style = styles[confidence];
+    return (
+      <span className={`text-[10px] px-2 py-0.5 rounded-full ${style.bg} ${style.text} font-medium ml-2`}>
+        {style.label} confidence
+      </span>
+    );
+  };
+
+  const renderAIBadge = (item: any) => {
+    if (!item._aiFilled) return null;
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full ml-2">
+        <Check className="w-3 h-3" />
+        AI Filled
+      </span>
+    );
+  };
+
+  const handleApplyAIData = () => {
+    if (aiFilledReferences && aiFilledReferences.length > 0 && onApplyAIData) {
+      onApplyAIData(aiFilledReferences);
+      setShowAISuggestions(false);
+      setAppliedAIData(true);
+    }
+  };
+
+  const renderAISuggestionBanner = () => {
+    if (!showAISuggestions || aiFilledReferences.length === 0) return null;
+
+    return (
+      <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-[#0F4C81]/20 rounded-xl p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div className="bg-[#0F4C81] p-2 rounded-lg">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                AI Found {aiFilledReferences.length} References from Your Resume
+              </h4>
+              <p className="text-sm text-gray-600 mt-1">
+                Would you like to auto-fill these references? You can review and edit each entry.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleApplyAIData}
+              className="px-4 py-2 bg-[#0F4C81] text-white rounded-lg hover:bg-[#0d3d66] transition-colors text-sm font-medium"
+            >
+              Apply All
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowAISuggestions(false);
+                if (onClearAIData) onClearAIData();
+              }}
+              className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+
+        {/* Preview of AI found references */}
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+          {aiFilledReferences.slice(0, 4).map((ref, idx) => (
+            <div key={idx} className="bg-white rounded-lg p-2 border border-gray-200">
+              <span className="text-xs font-semibold text-[#0F4C81]">{ref.fullName || 'Reference'}</span>
+              <p className="text-xs text-gray-600">
+                {ref.company} · {ref.jobTitle}
+              </p>
+            </div>
+          ))}
+          {aiFilledReferences.length > 4 && (
+            <div className="bg-white rounded-lg p-2 border border-gray-200 flex items-center justify-center">
+              <span className="text-xs text-gray-400">+{aiFilledReferences.length - 4} more</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-10">
+      {/* AI Suggestion Banner */}
+      {renderAISuggestionBanner()}
+
+      {/* Auto-fill success indicator */}
+      {autoFillSuccess && appliedAIData && aiFilledReferences.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-3">
+          <Check className="w-5 h-5 text-green-600" />
+          <span className="text-sm text-green-700 font-medium">
+            AI references applied! Please review and edit as needed.
+          </span>
+        </div>
+      )}
+
       {/* References */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -81,9 +206,14 @@ const Step4: React.FC<Step4Props> = ({
         </div>
         <div className="space-y-4">
           {references.map((ref, index) => (
-            <div key={ref.id} className="border border-gray-300 rounded-xl p-6 relative">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">
+            <div 
+              key={ref.id} 
+              className={`border ${ref._aiFilled ? 'border-green-300 bg-green-50/30' : 'border-gray-300'} rounded-xl p-6 relative`}
+            >
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
                 Reference {index + 1} <span className="text-red-500 ml-1">*</span>
+                {ref._aiFilled && renderAIBadge(ref)}
+                {ref._confidence && getConfidenceBadge(ref._confidence)}
               </h3>
               <button
                 type="button"
@@ -99,7 +229,7 @@ const Step4: React.FC<Step4Props> = ({
                     type="text"
                     value={ref.fullName}
                     onChange={(e) => onReferenceChange(ref.id, 'fullName', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none ${ref._aiFilled ? 'border-green-300 bg-green-50/50' : 'border-gray-300'}`}
                     placeholder="Referee's full name"
                   />
                 </div>
@@ -109,7 +239,7 @@ const Step4: React.FC<Step4Props> = ({
                     type="text"
                     value={ref.company}
                     onChange={(e) => onReferenceChange(ref.id, 'company', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none ${ref._aiFilled ? 'border-green-300 bg-green-50/50' : 'border-gray-300'}`}
                     placeholder="Company/Organization"
                   />
                 </div>
@@ -119,7 +249,7 @@ const Step4: React.FC<Step4Props> = ({
                     type="text"
                     value={ref.jobTitle}
                     onChange={(e) => onReferenceChange(ref.id, 'jobTitle', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none ${ref._aiFilled ? 'border-green-300 bg-green-50/50' : 'border-gray-300'}`}
                     placeholder="Their job title"
                   />
                 </div>
@@ -129,7 +259,7 @@ const Step4: React.FC<Step4Props> = ({
                     type="tel"
                     value={ref.phone}
                     onChange={(e) => onReferenceChange(ref.id, 'phone', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none ${ref._aiFilled ? 'border-green-300 bg-green-50/50' : 'border-gray-300'}`}
                     placeholder="Contact number"
                   />
                 </div>
@@ -139,7 +269,7 @@ const Step4: React.FC<Step4Props> = ({
                     type="email"
                     value={ref.email}
                     onChange={(e) => onReferenceChange(ref.id, 'email', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none ${ref._aiFilled ? 'border-green-300 bg-green-50/50' : 'border-gray-300'}`}
                     placeholder="Email address"
                   />
                 </div>
@@ -149,7 +279,7 @@ const Step4: React.FC<Step4Props> = ({
                     type="text"
                     value={ref.relationship}
                     onChange={(e) => onReferenceChange(ref.id, 'relationship', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none ${ref._aiFilled ? 'border-green-300 bg-green-50/50' : 'border-gray-300'}`}
                     placeholder="e.g., Line Manager"
                   />
                 </div>
@@ -159,7 +289,7 @@ const Step4: React.FC<Step4Props> = ({
                     type="text"
                     value={ref.yearsKnown}
                     onChange={(e) => onReferenceChange(ref.id, 'yearsKnown', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none ${ref._aiFilled ? 'border-green-300 bg-green-50/50' : 'border-gray-300'}`}
                     placeholder="e.g., 3 years"
                   />
                 </div>
@@ -168,7 +298,7 @@ const Step4: React.FC<Step4Props> = ({
                   <select
                     value={ref.type}
                     onChange={(e) => onReferenceChange(ref.id, 'type', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#0F4C81] focus:border-transparent outline-none ${ref._aiFilled ? 'border-green-300 bg-green-50/50' : 'border-gray-300'}`}
                   >
                     <option value="">Select type...</option>
                     <option value="Professional">Professional</option>
