@@ -1,6 +1,7 @@
 // components/website/applyjob/Step1.tsx
-import React from 'react';
-import { Sparkles, Upload, FileText, X, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, Upload, FileText, X, Check, Loader2, AlertCircle } from 'lucide-react';
+import resumeParserService from '@/utils/resumeParser';
 
 interface Step1Props {
   formData: any;
@@ -14,6 +15,7 @@ interface Step1Props {
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>, type: string) => void;
   onFileRemove: (type: string) => void;
+  setFormData?: (data: any) => void;
 }
 
 const Step1: React.FC<Step1Props> = ({
@@ -27,15 +29,102 @@ const Step1: React.FC<Step1Props> = ({
   jobDetails,
   onChange,
   onFileUpload,
-  onFileRemove
+  onFileRemove,
+  setFormData
 }) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [autoFillSuccess, setAutoFillSuccess] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [parsedData, setParsedData] = useState<any>(null);
+
+  // For Vite - use import.meta.env
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+  
+  console.log("🔑 API Key configured:", !!apiKey);
+  console.log("📝 API Key length:", apiKey.length);
+  console.log("🌐 All Vite env vars:", import.meta.env);
+
+  // Handle file upload with AI auto-fill
+  const handleFileUploadWithAI = async (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    console.log('📎 File selected:', file.name, file.type, file.size);
+
+    // Call the original upload handler
+    onFileUpload(e, type);
+
+    if (type === 'resume' && setFormData) {
+      setIsProcessing(true);
+      setParseError(null);
+      
+      try {
+        // Check if API key exists
+        if (!apiKey) {
+          console.error('❌ API Key is missing!');
+          throw new Error(
+            'OpenAI API key not configured. Please:\n' +
+            '1. Create a .env file in your project root\n' +
+            '2. Add VITE_OPENAI_API_KEY=your_api_key_here\n' +
+            '3. Restart your development server'
+          );
+        }
+
+        console.log('🔄 Calling resume parser with AI...');
+        const parsedData = await resumeParserService.parseResumeWithAI(file, apiKey);
+        console.log('✅ Parsed data received:', parsedData);
+        
+        setParsedData(parsedData);
+        
+        const updatedFormData = {
+          ...formData,
+          firstName: parsedData.firstName || formData.firstName || '',
+          lastName: parsedData.lastName || formData.lastName || '',
+          email: parsedData.email || formData.email || '',
+          phone: parsedData.phone || formData.phone || '',
+          dateOfBirth: parsedData.dateOfBirth || formData.dateOfBirth || '',
+          addressLine1: parsedData.addressLine1 || formData.addressLine1 || '',
+          addressLine2: parsedData.addressLine2 || formData.addressLine2 || '',
+          city: parsedData.city || formData.city || '',
+          county: parsedData.county || formData.county || '',
+          postcode: parsedData.postcode || formData.postcode || '',
+          nationality: parsedData.nationality || formData.nationality || '',
+          rightToWork: parsedData.rightToWork || formData.rightToWork || '',
+        };
+        
+        setFormData(updatedFormData);
+        setAutoFillSuccess(true);
+        setTimeout(() => setAutoFillSuccess(false), 10000);
+      } catch (error: any) {
+        console.error('❌ AI parsing failed:', error);
+        setParseError(error.message || 'Failed to parse resume. Please fill in the details manually.');
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  // Helper function to get input className with auto-fill highlighting
+  const getInputClassName = (fieldName: string) => {
+    const baseClass = "w-full px-5 py-3.5 border-2 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal";
+    const autoFilled = autoFillSuccess && formData[fieldName];
+    return `${baseClass} ${autoFilled ? 'border-green-400 bg-green-50' : 'border-gray-200'}`;
+  };
+
   return (
     <div className="space-y-8">
       {/* Resume Upload Section */}
       <div className="relative bg-gradient-to-br from-[#0F4C81]/5 via-blue-50/50 to-indigo-50/30 rounded-2xl p-8 border-2 border-[#0F4C81]/10 shadow-sm">
-        <div className="absolute top-4 right-4">
-          <div className="bg-[#0F4C81]/10 text-[#0F4C81] text-xs font-bold px-3 py-1.5 rounded-full">
-            SMART FILL
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          {autoFillSuccess && (
+            <div className="flex items-center gap-1 bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full animate-pulse">
+              <Check className="w-3 h-3" />
+              AI Auto-filled!
+            </div>
+          )}
+          <div className="bg-[#0F4C81]/10 text-[#0F4C81] text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            AI SMART FILL
           </div>
         </div>
         <div className="flex items-start gap-4 mb-6">
@@ -45,9 +134,24 @@ const Step1: React.FC<Step1Props> = ({
           <div className="flex-1">
             <h3 className="text-xl font-bold text-gray-900 mb-2">Upload Your Resume</h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-              Our smart system will analyze your resume and automatically populate your information below
+              Our AI-powered system will analyze your resume and automatically populate your information below
               {jobDetails?.requireResume && <span className="text-red-500 ml-1">*</span>}
             </p>
+            {!apiKey && (
+              <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-800">OpenAI API Key Not Configured</p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    To enable AI auto-fill, create a <code className="bg-yellow-100 px-1 py-0.5 rounded">.env</code> file in your project root and add:
+                  </p>
+                  <code className="text-xs bg-yellow-100 px-2 py-1 rounded block mt-1">
+                    VITE_OPENAI_API_KEY=your_api_key_here
+                  </code>
+                  <p className="text-xs text-yellow-700 mt-1">Then restart your development server.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
@@ -61,14 +165,25 @@ const Step1: React.FC<Step1Props> = ({
                 <span className="text-sm text-gray-900 font-semibold block">
                   {resumeFile ? resumeFile.name : 'Resume uploaded'}
                 </span>
-                <span className="text-xs text-green-700 font-medium">
+                <span className="text-xs text-green-700 font-medium flex items-center gap-1">
                   {resumeUrl ? 'Uploaded successfully' : 'Ready to proceed'}
+                  {autoFillSuccess && (
+                    <span className="flex items-center gap-1 ml-1 bg-green-200 px-2 py-0.5 rounded-full text-green-800">
+                      <Check className="w-3 h-3" />
+                      AI analyzed
+                    </span>
+                  )}
                 </span>
               </div>
             </div>
             <button
               type="button"
-              onClick={() => onFileRemove('resume')}
+              onClick={() => {
+                onFileRemove('resume');
+                setAutoFillSuccess(false);
+                setParsedData(null);
+                setParseError(null);
+              }}
               className="bg-white p-2 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-all shadow-sm"
             >
               <X className="w-5 h-5" />
@@ -78,10 +193,10 @@ const Step1: React.FC<Step1Props> = ({
           <div className="relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all bg-white shadow-sm border-gray-300 hover:border-[#0F4C81] hover:shadow-md">
             <input
               type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(e) => onFileUpload(e, 'resume')}
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={(e) => handleFileUploadWithAI(e, 'resume')}
               className="absolute inset-0 opacity-0 cursor-pointer"
-              disabled={isUploading}
+              disabled={isUploading || isProcessing}
             />
             <div className="py-4">
               <div className="bg-gradient-to-br from-[#0F4C81] to-[#1565a8] p-4 rounded-2xl w-fit mx-auto mb-4 shadow-lg shadow-[#0F4C81]/20">
@@ -92,18 +207,62 @@ const Step1: React.FC<Step1Props> = ({
                 {jobDetails?.requireResume && <span className="text-red-500 ml-1">*</span>}
               </p>
               <p className="text-sm text-gray-500 font-medium">
-                PDF, DOC, or DOCX • Maximum 10MB
+                PDF, DOC, DOCX, or TXT • Maximum 10MB
               </p>
-              {isResumeUploading && (
+              {isProcessing && (
+                <div className="mt-3 flex items-center justify-center gap-2 text-[#0F4C81]">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm font-medium">AI is analyzing your resume...</span>
+                </div>
+              )}
+              {isResumeUploading && !isProcessing && (
                 <div className="mt-3 flex items-center justify-center gap-2 text-[#0F4C81]">
                   <div className="w-4 h-4 border-2 border-[#0F4C81] border-t-transparent rounded-full animate-spin" />
                   <span className="text-sm font-medium">Processing resume...</span>
                 </div>
               )}
-              {isUploading && (
+              {isUploading && !isProcessing && !isResumeUploading && (
                 <div className="mt-3 flex items-center justify-center gap-2 text-[#0F4C81]">
                   <div className="w-4 h-4 border-2 border-[#0F4C81] border-t-transparent rounded-full animate-spin" />
                   <span className="text-sm font-medium">Uploading...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {parseError && (
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+            <div className="text-red-500 text-xl">⚠️</div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-800">AI Parsing Failed</p>
+              <p className="text-xs text-red-600 whitespace-pre-line">{parseError}</p>
+              <p className="text-xs text-red-600 mt-1">Please fill in the details manually below.</p>
+            </div>
+          </div>
+        )}
+        
+        {autoFillSuccess && parsedData && (
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
+            <div className="bg-green-500 p-1.5 rounded-full flex-shrink-0 mt-0.5">
+              <Check className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-green-800">Resume analyzed successfully!</p>
+              <p className="text-xs text-green-700 mt-1">
+                We've extracted and filled in your personal information from the resume. 
+                Please review and correct if needed.
+              </p>
+              {parsedData.skills && parsedData.skills.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {parsedData.skills.slice(0, 5).map((skill: string, index: number) => (
+                    <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                      {skill}
+                    </span>
+                  ))}
+                  {parsedData.skills.length > 5 && (
+                    <span className="text-xs text-green-600">+{parsedData.skills.length - 5} more</span>
+                  )}
                 </div>
               )}
             </div>
@@ -122,8 +281,8 @@ const Step1: React.FC<Step1Props> = ({
         </div>
       </div>
 
-      {/* ... rest of the personal info fields (same as before) ... */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {/* Personal Info Fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-bold text-gray-800 mb-2.5">
             First Name <span className="text-red-500">*</span>
@@ -131,11 +290,14 @@ const Step1: React.FC<Step1Props> = ({
           <input
             name="firstName"
             type="text"
-            value={formData.firstName}
+            value={formData.firstName || ''}
             onChange={onChange}
-            className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+            className={getInputClassName('firstName')}
             placeholder="Enter your first name"
           />
+          {autoFillSuccess && formData.firstName && (
+            <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-bold text-gray-800 mb-2.5">
@@ -144,11 +306,14 @@ const Step1: React.FC<Step1Props> = ({
           <input
             name="lastName"
             type="text"
-            value={formData.lastName}
+            value={formData.lastName || ''}
             onChange={onChange}
-            className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+            className={getInputClassName('lastName')}
             placeholder="Enter your last name"
           />
+          {autoFillSuccess && formData.lastName && (
+            <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+          )}
         </div>
       </div>
 
@@ -160,11 +325,14 @@ const Step1: React.FC<Step1Props> = ({
           <input
             name="email"
             type="email"
-            value={formData.email}
+            value={formData.email || ''}
             onChange={onChange}
-            className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+            className={getInputClassName('email')}
             placeholder="your.email@example.com"
           />
+          {autoFillSuccess && formData.email && (
+            <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-bold text-gray-800 mb-2.5">
@@ -173,11 +341,14 @@ const Step1: React.FC<Step1Props> = ({
           <input
             name="phone"
             type="tel"
-            value={formData.phone}
+            value={formData.phone || ''}
             onChange={onChange}
-            className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+            className={getInputClassName('phone')}
             placeholder="+44 7XXX XXXXXX"
           />
+          {autoFillSuccess && formData.phone && (
+            <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+          )}
         </div>
       </div>
 
@@ -188,10 +359,13 @@ const Step1: React.FC<Step1Props> = ({
         <input
           name="dateOfBirth"
           type="date"
-          value={formData.dateOfBirth}
+          value={formData.dateOfBirth || ''}
           onChange={onChange}
-          className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium"
+          className={getInputClassName('dateOfBirth')}
         />
+        {autoFillSuccess && formData.dateOfBirth && (
+          <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -202,11 +376,14 @@ const Step1: React.FC<Step1Props> = ({
           <input
             name="addressLine1"
             type="text"
-            value={formData.addressLine1}
+            value={formData.addressLine1 || ''}
             onChange={onChange}
-            className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+            className={getInputClassName('addressLine1')}
             placeholder="Street address"
           />
+          {autoFillSuccess && formData.addressLine1 && (
+            <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-bold text-gray-800 mb-2.5">
@@ -215,9 +392,9 @@ const Step1: React.FC<Step1Props> = ({
           <input
             name="addressLine2"
             type="text"
-            value={formData.addressLine2}
+            value={formData.addressLine2 || ''}
             onChange={onChange}
-            className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+            className={getInputClassName('addressLine2')}
             placeholder="Apartment, suite, etc. (optional)"
           />
         </div>
@@ -229,11 +406,14 @@ const Step1: React.FC<Step1Props> = ({
             <input
               name="city"
               type="text"
-              value={formData.city}
+              value={formData.city || ''}
               onChange={onChange}
-              className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+              className={getInputClassName('city')}
               placeholder="City"
             />
+            {autoFillSuccess && formData.city && (
+              <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-2.5">
@@ -242,11 +422,14 @@ const Step1: React.FC<Step1Props> = ({
             <input
               name="county"
               type="text"
-              value={formData.county}
+              value={formData.county || ''}
               onChange={onChange}
-              className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+              className={getInputClassName('county')}
               placeholder="County"
             />
+            {autoFillSuccess && formData.county && (
+              <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-800 mb-2.5">
@@ -255,11 +438,14 @@ const Step1: React.FC<Step1Props> = ({
             <input
               name="postcode"
               type="text"
-              value={formData.postcode}
+              value={formData.postcode || ''}
               onChange={onChange}
-              className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+              className={getInputClassName('postcode')}
               placeholder="Postcode"
             />
+            {autoFillSuccess && formData.postcode && (
+              <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+            )}
           </div>
         </div>
       </div>
@@ -272,11 +458,14 @@ const Step1: React.FC<Step1Props> = ({
           <input
             name="nationality"
             type="text"
-            value={formData.nationality}
+            value={formData.nationality || ''}
             onChange={onChange}
-            className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-medium placeholder:text-gray-400 placeholder:font-normal"
+            className={getInputClassName('nationality')}
             placeholder="Your nationality"
           />
+          {autoFillSuccess && formData.nationality && (
+            <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-bold text-gray-800 mb-2.5">
@@ -284,9 +473,11 @@ const Step1: React.FC<Step1Props> = ({
           </label>
           <select
             name="rightToWork"
-            value={formData.rightToWork}
+            value={formData.rightToWork || ''}
             onChange={onChange}
-            className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-bold appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22M6%208l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em_1.5em] bg-[right_0.5rem_center] bg-no-repeat pr-10"
+            className={`w-full px-5 py-3.5 border-2 rounded-xl focus:ring-4 focus:ring-[#0F4C81]/10 focus:border-[#0F4C81] outline-none transition-all bg-gray-50 hover:bg-white hover:border-gray-300 font-bold appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22M6%208l4%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em_1.5em] bg-[right_0.5rem_center] bg-no-repeat pr-10 ${
+              autoFillSuccess && formData.rightToWork ? 'border-green-400 bg-green-50' : 'border-gray-200'
+            }`}
           >
             <option value="">Select...</option>
             <option value="British Citizen">British Citizen</option>
@@ -295,6 +486,9 @@ const Step1: React.FC<Step1Props> = ({
             <option value="Student Visa">Student Visa</option>
             <option value="Other">Other</option>
           </select>
+          {autoFillSuccess && formData.rightToWork && (
+            <p className="text-xs text-green-600 mt-1">✓ Auto-filled from resume</p>
+          )}
         </div>
       </div>
       

@@ -10,6 +10,7 @@ import Step3 from '@/components/website/applyjob/Step3';
 import Step4 from '@/components/website/applyjob/Step4';
 import Step5 from '@/components/website/applyjob/Step5';
 import Step6 from '@/components/website/applyjob/Step6';
+import resumeParserService from '@/utils/resumeParser';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -66,8 +67,8 @@ interface Training {
   provider: string;
   dateCompleted: string;
   expiryDate: string;
-  certificate: string; // URL string
-  certificateFile: File | null; // For upload
+  certificate: string;
+  certificateFile: File | null;
 }
 
 interface Registration {
@@ -157,7 +158,6 @@ const ApplyJob: React.FC = () => {
     unspentConvictions: null as boolean | null,
     documents: [] as File[],
     documentUrls: [] as string[],
-    // Job-specific required documents
     drivingLicenceFile: null as File | null,
     drivingLicenceUrl: '' as string,
     dbsCertificateFile: null as File | null,
@@ -204,12 +204,10 @@ const ApplyJob: React.FC = () => {
           }));
         } else {
           toast.error('Failed to fetch job details');
-        //   navigate('/jobs');
         }
       } catch (error) {
         console.error('Error fetching job:', error);
         toast.error('Job not found');
-        // navigate('/jobs');
       } finally {
         setFetchingJob(false);
       }
@@ -253,24 +251,21 @@ const ApplyJob: React.FC = () => {
     }
   };
 
-  // ---- Handlers for Step 1 ----
-  const handlePersonalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setPersonalInfo(prev => ({ ...prev, [name]: value }));
-  };
-
+  // ---- Updated File Upload Handler with AI Integration ----
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fileType: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    console.log('📎 File selected:', file.name, file.type, file.size);
 
     if (file.size > 10 * 1024 * 1024) {
       toast.error('File size must be less than 10MB');
       return;
     }
 
-    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|doc|docx)$/i)) {
-      toast.error('Please upload PDF, DOC, or DOCX files only');
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|doc|docx|txt)$/i)) {
+      toast.error('Please upload PDF, DOC, DOCX, or TXT files only');
       return;
     }
 
@@ -282,20 +277,44 @@ const ApplyJob: React.FC = () => {
       setResumeFile(file);
       setResumeUrl(url);
       setIsResumeUploading(true);
-      // Simulate resume parsing
-      setTimeout(() => {
+
+      try {
+        const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+        
+        if (!apiKey) {
+          toast.error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to .env');
+          setIsResumeUploading(false);
+          return;
+        }
+
+        toast.loading('🤖 Analyzing your resume with AI...', { id: 'resume-parsing' });
+        
+        const parsedData = await resumeParserService.parseResumeWithAI(file, apiKey);
+        console.log('✅ AI Parsed Data:', parsedData);
+        
         setPersonalInfo(prev => ({
           ...prev,
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@example.com',
-          phone: '+44 7700 900000',
-          nationality: 'British',
-          rightToWork: 'British Citizen'
+          firstName: parsedData.firstName || prev.firstName,
+          lastName: parsedData.lastName || prev.lastName,
+          email: parsedData.email || prev.email,
+          phone: parsedData.phone || prev.phone,
+          dateOfBirth: parsedData.dateOfBirth || prev.dateOfBirth,
+          addressLine1: parsedData.addressLine1 || prev.addressLine1,
+          addressLine2: parsedData.addressLine2 || prev.addressLine2 || '',
+          city: parsedData.city || prev.city,
+          county: parsedData.county || prev.county,
+          postcode: parsedData.postcode || prev.postcode,
+          nationality: parsedData.nationality || prev.nationality,
+          rightToWork: parsedData.rightToWork || prev.rightToWork,
         }));
+
+        toast.success('✅ Resume uploaded and AI auto-filled successfully!', { id: 'resume-parsing' });
+      } catch (error: any) {
+        console.error('❌ AI parsing error:', error);
+        toast.error(error.message || 'Failed to parse resume with AI. Please fill in manually.', { id: 'resume-parsing' });
+      } finally {
         setIsResumeUploading(false);
-        toast.success('Resume uploaded and information auto-filled!');
-      }, 1500);
+      }
     } else if (fileType === 'coverLetter') {
       setCoverLetterFile(file);
       setCoverLetterUrl(url);
@@ -350,6 +369,12 @@ const ApplyJob: React.FC = () => {
         referencesUrl: ''
       }));
     }
+  };
+
+  // ---- Handlers for Step 1 ----
+  const handlePersonalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setPersonalInfo(prev => ({ ...prev, [name]: value }));
   };
 
   // ---- Handlers for Step 2 ----
@@ -712,24 +737,88 @@ const ApplyJob: React.FC = () => {
     }
   };
 
-// ---- Submit ----
-const handleSubmit = async () => {
-  if (!validateStep(6)) return;
+  // ---- Submit ----
+  const handleSubmit = async () => {
+    if (!validateStep(6)) return;
 
-  // Check if user already has a token (logged in)
-  const existingToken = localStorage.getItem('token');
-  const existingCandidateId = localStorage.getItem('candidateId');
+    const existingToken = localStorage.getItem('token');
+    const existingCandidateId = localStorage.getItem('candidateId');
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    let candidateId = existingCandidateId;
-    let authToken = existingToken;
+      let candidateId = existingCandidateId;
+      let authToken = existingToken;
 
-    // Step 1: Create/Register candidate if not already registered
-    if (!authToken || !candidateId) {
-      const createPayload = {
-        // Step 1: Personal Information
+      if (!authToken || !candidateId) {
+        const createPayload = {
+          firstName: personalInfo.firstName,
+          lastName: personalInfo.lastName,
+          email: personalInfo.email,
+          phone: personalInfo.phone,
+          dateOfBirth: personalInfo.dateOfBirth,
+          addressLine1: personalInfo.addressLine1,
+          addressLine2: personalInfo.addressLine2,
+          city: personalInfo.city,
+          county: personalInfo.county,
+          postcode: personalInfo.postcode,
+          nationality: personalInfo.nationality,
+          rightToWork: personalInfo.rightToWork,
+          positionAppliedFor: roleInfo.positionAppliedFor,
+          workPreference: roleInfo.workPreference,
+          preferredLocations: roleInfo.preferredLocations,
+          availability: roleInfo.availability,
+          drivingLicense: roleInfo.drivingLicense,
+          ownVehicle: roleInfo.ownVehicle,
+          shiftConfirmation: roleInfo.shiftConfirmation,
+          education: qualifications.education,
+          experience: qualifications.experience,
+          training: qualifications.training,
+          registrations: qualifications.registrations,
+          references: compliance.references,
+          dbsValid: compliance.dbsValid,
+          disciplinaryAction: compliance.disciplinaryAction,
+          unspentConvictions: compliance.unspentConvictions,
+          documents: compliance.documentUrls,
+          drivingLicenceUrl: compliance.drivingLicenceUrl,
+          dbsCertificateUrl: compliance.dbsCertificateUrl,
+          referencesUrl: compliance.referencesUrl,
+          heardFrom: values.heardFrom,
+          supportingStatement: values.supportingStatement,
+          scenarioAnswers: values.scenarioAnswers,
+          coreValues: values.coreValues,
+          resumeUrl: resumeUrl,
+          coverLetterUrl: coverLetterUrl
+        };
+
+        const createResponse = await axios.post(
+          `${API_URL}/api/admin/candidates`,
+          createPayload
+        );
+
+        if (!createResponse.data.success) {
+          toast.error(createResponse.data.message || 'Failed to create candidate profile');
+          setLoading(false);
+          return;
+        }
+
+        candidateId = createResponse.data.data._id;
+        authToken = createResponse.data.data.token;
+
+        if (authToken) {
+          localStorage.setItem("token", authToken);
+          if (candidateId) {
+            localStorage.setItem("candidateId", candidateId);
+          }
+        }
+      
+        toast.success('Candidate profile created successfully!');
+      }
+
+      const applyPayload = {
+        candidateId: candidateId,
+        jobId: jobDetails?._id || null,
+        jobTitle: jobDetails?.jobTitle || roleInfo.positionAppliedFor,
         firstName: personalInfo.firstName,
         lastName: personalInfo.lastName,
         email: personalInfo.email,
@@ -742,8 +831,6 @@ const handleSubmit = async () => {
         postcode: personalInfo.postcode,
         nationality: personalInfo.nationality,
         rightToWork: personalInfo.rightToWork,
-        
-        // Step 2: Role & Availability
         positionAppliedFor: roleInfo.positionAppliedFor,
         workPreference: roleInfo.workPreference,
         preferredLocations: roleInfo.preferredLocations,
@@ -751,14 +838,10 @@ const handleSubmit = async () => {
         drivingLicense: roleInfo.drivingLicense,
         ownVehicle: roleInfo.ownVehicle,
         shiftConfirmation: roleInfo.shiftConfirmation,
-        
-        // Step 3: Qualifications & Experience
         education: qualifications.education,
         experience: qualifications.experience,
         training: qualifications.training,
         registrations: qualifications.registrations,
-        
-        // Step 4: Compliance & References
         references: compliance.references,
         dbsValid: compliance.dbsValid,
         disciplinaryAction: compliance.disciplinaryAction,
@@ -767,136 +850,49 @@ const handleSubmit = async () => {
         drivingLicenceUrl: compliance.drivingLicenceUrl,
         dbsCertificateUrl: compliance.dbsCertificateUrl,
         referencesUrl: compliance.referencesUrl,
-        
-        // Step 5: Values & Assessment
         heardFrom: values.heardFrom,
         supportingStatement: values.supportingStatement,
         scenarioAnswers: values.scenarioAnswers,
         coreValues: values.coreValues,
-        
-        // Metadata
         resumeUrl: resumeUrl,
-        coverLetterUrl: coverLetterUrl
+        coverLetterUrl: coverLetterUrl,
+        coverLetter: coverLetterUrl ? 'Cover letter uploaded' : '',
+        notes: `Applied for ${jobDetails?.jobTitle || roleInfo.positionAppliedFor} position`
       };
 
-      const createResponse = await axios.post(
-        `${API_URL}/api/admin/candidates`,
-        createPayload
+      const applyResponse = await axios.post(
+        `${API_URL}/api/admin/candidates/apply`,
+        applyPayload,
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
       );
 
-      if (!createResponse.data.success) {
-        toast.error(createResponse.data.message || 'Failed to create candidate profile');
-        setLoading(false);
-        return;
+      if (applyResponse.data.success) {
+        toast.success('Application submitted successfully! 🎉');
+        navigate('/careers', { 
+          state: { 
+            jobTitle: jobDetails?.jobTitle || roleInfo.positionAppliedFor,
+            candidateId: candidateId
+          } 
+        });
+      } else {
+        toast.error(applyResponse.data.message || 'Failed to submit application');
       }
-
-        candidateId = createResponse.data.data._id;
-        authToken = createResponse.data.data.token;
-
-        if (authToken) {
-        localStorage.setItem("token", authToken);
-
-        if (candidateId) {
-            localStorage.setItem("candidateId", candidateId);
-        }
-        }
-      
-      toast.success('Candidate profile created successfully!');
-    }
-
-    // Step 2: Apply for the job with job details
-    const applyPayload = {
-      candidateId: candidateId,
-      jobId: jobDetails?._id || null,
-      jobTitle: jobDetails?.jobTitle || roleInfo.positionAppliedFor,
-      
-      // Step 1: Personal Information (for update if needed)
-      firstName: personalInfo.firstName,
-      lastName: personalInfo.lastName,
-      email: personalInfo.email,
-      phone: personalInfo.phone,
-      dateOfBirth: personalInfo.dateOfBirth,
-      addressLine1: personalInfo.addressLine1,
-      addressLine2: personalInfo.addressLine2,
-      city: personalInfo.city,
-      county: personalInfo.county,
-      postcode: personalInfo.postcode,
-      nationality: personalInfo.nationality,
-      rightToWork: personalInfo.rightToWork,
-      
-      // Step 2: Role & Availability
-      positionAppliedFor: roleInfo.positionAppliedFor,
-      workPreference: roleInfo.workPreference,
-      preferredLocations: roleInfo.preferredLocations,
-      availability: roleInfo.availability,
-      drivingLicense: roleInfo.drivingLicense,
-      ownVehicle: roleInfo.ownVehicle,
-      shiftConfirmation: roleInfo.shiftConfirmation,
-      
-      // Step 3: Qualifications & Experience
-      education: qualifications.education,
-      experience: qualifications.experience,
-      training: qualifications.training,
-      registrations: qualifications.registrations,
-      
-      // Step 4: Compliance & References
-      references: compliance.references,
-      dbsValid: compliance.dbsValid,
-      disciplinaryAction: compliance.disciplinaryAction,
-      unspentConvictions: compliance.unspentConvictions,
-      documents: compliance.documentUrls,
-      drivingLicenceUrl: compliance.drivingLicenceUrl,
-      dbsCertificateUrl: compliance.dbsCertificateUrl,
-      referencesUrl: compliance.referencesUrl,
-      
-      // Step 5: Values & Assessment
-      heardFrom: values.heardFrom,
-      supportingStatement: values.supportingStatement,
-      scenarioAnswers: values.scenarioAnswers,
-      coreValues: values.coreValues,
-      
-      // Resume and Cover Letter
-      resumeUrl: resumeUrl,
-      coverLetterUrl: coverLetterUrl,
-      
-      // Additional info
-      coverLetter: coverLetterUrl ? 'Cover letter uploaded' : '',
-      notes: `Applied for ${jobDetails?.jobTitle || roleInfo.positionAppliedFor} position`
-    };
-
-    const applyResponse = await axios.post(
-      `${API_URL}/api/admin/candidates/apply`,
-      applyPayload,
-      {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
+    } catch (error: any) {
+      console.error('Error submitting application:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to submit application. Please try again.');
       }
-    );
-
-    if (applyResponse.data.success) {
-      toast.success('Application submitted successfully! 🎉');
-      navigate('/careers', { 
-        state: { 
-          jobTitle: jobDetails?.jobTitle || roleInfo.positionAppliedFor,
-          candidateId: candidateId
-        } 
-      });
-    } else {
-      toast.error(applyResponse.data.message || 'Failed to submit application');
+    } finally {
+      setLoading(false);
     }
-  } catch (error: any) {
-    console.error('Error submitting application:', error);
-    if (error.response?.data?.message) {
-      toast.error(error.response.data.message);
-    } else {
-      toast.error('Failed to submit application. Please try again.');
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // ---- Render Step ----
   const renderStep = () => {
@@ -915,6 +911,7 @@ const handleSubmit = async () => {
             onChange={handlePersonalChange}
             onFileUpload={handleFileUpload}
             onFileRemove={handleFileRemove}
+            setFormData={setPersonalInfo}
           />
         );
       case 2:
@@ -1031,28 +1028,7 @@ const handleSubmit = async () => {
               <ChevronLeft className="w-5 h-5" />
               <span className="hidden sm:inline">Back to Jobs</span>
             </button>
-            
           </div>
-          {/* <div className="flex items-center gap-2">
-            <button
-              onClick={() => toast.success('Progress saved!')}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              <span className="hidden sm:inline">Save Progress</span>
-            </button>
-            <button
-              onClick={() => {
-                if (confirm('Are you sure you want to exit? Your progress will be lost.')) {
-                  navigate('/jobs');
-                }
-              }}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X className="w-4 h-4" />
-              <span className="hidden sm:inline">Exit Application</span>
-            </button>
-          </div> */}
         </div>
         <div className="h-1 bg-gray-200">
           <div 
